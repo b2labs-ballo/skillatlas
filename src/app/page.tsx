@@ -41,28 +41,28 @@ async function Directory({ searchParams }: Pick<PageProps<"/">, "searchParams">)
     <>
       <Filters initial={filters} />
 
-      <div className="flex items-center justify-between gap-3 text-sm text-muted" aria-live="polite">
+      <div className="flex items-center justify-between gap-3 pt-4 text-sm font-medium text-muted" aria-live="polite">
         <p>
           {failed ? "" : `${total.toLocaleString("en")} ${total === 1 ? "result" : "results"}`}
           {!failed && pages > 1 ? ` · page ${Math.min(page, pages)} of ${pages.toLocaleString("en")}` : ""}
         </p>
         {hasFilters && (
-          <Link href="/" className="font-medium text-accent hover:underline">
+          <Link href="/" className="font-semibold text-accent hover:underline">
             Clear filters
           </Link>
         )}
       </div>
 
       {failed ? (
-        <p className="rounded-2xl border border-line bg-surface p-6 text-center text-muted">
+        <p className="rounded-3xl border border-line bg-surface p-8 text-center text-muted shadow-card">
           The directory could not be loaded right now. Please try again in a moment.
         </p>
       ) : entries.length === 0 ? (
-        <p className="rounded-2xl border border-line bg-surface p-6 text-center text-muted">
+        <p className="rounded-3xl border border-line bg-surface p-8 text-center text-muted shadow-card">
           Nothing matches yet. Try a shorter search or remove a filter.
         </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
           {entries.map((e) => (
             <li key={e.slug}>
               <EntryCard entry={e} />
@@ -72,20 +72,20 @@ async function Directory({ searchParams }: Pick<PageProps<"/">, "searchParams">)
       )}
 
       {!failed && pages > 1 && (
-        <nav aria-label="Pages" className="flex items-center justify-center gap-3 pt-2">
+        <nav aria-label="Pages" className="flex items-center justify-center gap-3 pt-6">
           {page > 1 ? (
-            <Link href={pageUrl(page - 1)} className="h-11 rounded-full border border-line bg-surface px-5 text-sm font-medium leading-[2.6rem] hover:border-accent">
+            <Link href={pageUrl(page - 1)} className="inline-flex h-12 items-center rounded-full border border-line bg-surface px-6 text-sm font-semibold shadow-card hover:border-accent hover:text-accent">
               ← Previous
             </Link>
           ) : (
-            <span className="h-11 rounded-full border border-line px-5 text-sm font-medium leading-[2.6rem] text-muted opacity-50">← Previous</span>
+            <span className="inline-flex h-12 items-center rounded-full border border-line px-6 text-sm font-semibold text-muted opacity-50">← Previous</span>
           )}
           {page < pages ? (
-            <Link href={pageUrl(page + 1)} className="h-11 rounded-full bg-accent px-5 text-sm font-medium leading-[2.75rem] text-on-accent hover:opacity-90">
+            <Link href={pageUrl(page + 1)} className="btn-primary inline-flex h-12 items-center rounded-full px-7 text-sm font-semibold shadow-card">
               Next →
             </Link>
           ) : (
-            <span className="h-11 rounded-full border border-line px-5 text-sm font-medium leading-[2.6rem] text-muted opacity-50">Next →</span>
+            <span className="inline-flex h-12 items-center rounded-full border border-line px-6 text-sm font-semibold text-muted opacity-50">Next →</span>
           )}
         </nav>
       )}
@@ -96,12 +96,12 @@ async function Directory({ searchParams }: Pick<PageProps<"/">, "searchParams">)
 /** Grey placeholder shown for a moment while results load. */
 function DirectorySkeleton() {
   return (
-    <div className="flex flex-col gap-3" role="status" aria-label="Loading the directory">
-      <div className="h-12 animate-pulse rounded-2xl bg-line/60" />
+    <div className="flex flex-col gap-4" role="status" aria-label="Loading the directory">
+      <div className="h-14 animate-pulse rounded-full bg-line/60" />
       <div className="h-10 w-2/3 animate-pulse rounded-full bg-line/60" />
-      <div className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 pt-6 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
         {Array.from({ length: 6 }, (_, i) => (
-          <div key={i} className="h-44 animate-pulse rounded-2xl bg-line/60" />
+          <div key={i} className="h-48 animate-pulse rounded-3xl bg-line/60" />
         ))}
       </div>
     </div>
@@ -110,10 +110,12 @@ function DirectorySkeleton() {
 
 export default function Home({ searchParams }: PageProps<"/">) {
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Find a skill for the job</h1>
-        <p className="mt-1 text-sm text-muted sm:text-base">
+    <div className="flex flex-col gap-6">
+      <div className="max-w-3xl">
+        <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">
+          Find the right <span className="text-gradient">skill</span> for the job
+        </h1>
+        <p className="mt-4 text-base leading-relaxed text-muted sm:text-lg">
           Community-made skills, plugins, MCP servers and custom GPTs for Claude and ChatGPT — each one credited and linked
           to its creator.
         </p>

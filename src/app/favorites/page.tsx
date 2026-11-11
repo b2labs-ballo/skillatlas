@@ -36,10 +36,12 @@ export default function FavoritesPage() {
   const loading = slugs.length > 0 && !loaded;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Favourites</h1>
-        <p className="mt-1 text-sm text-muted">Saved in this browser on this device.</p>
+        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+          Your <span className="text-gradient">favourites</span>
+        </h1>
+        <p className="mt-3 text-base text-muted">Saved in this browser on this device.</p>
       </div>
 
       {slugs.length === 0 ? (
@@ -58,7 +60,7 @@ export default function FavoritesPage() {
           Your favourites could not be loaded right now. Please try again in a moment.
         </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
           {entries.map((e) => (
             <li key={e.slug}>
               <EntryCard entry={e} />

@@ -97,6 +97,14 @@ function candidate(fullName) {
   return candidates.get(key);
 }
 
+const slim = (r) => ({
+  full_name: r.full_name, name: r.name, description: r.description, topics: r.topics, fork: r.fork, archived: r.archived,
+  disabled: r.disabled, private: r.private, size: r.size, stargazers_count: r.stargazers_count, pushed_at: r.pushed_at,
+  homepage: r.homepage, html_url: r.html_url, default_branch: r.default_branch,
+  license: r.license ? { spdx_id: r.license.spdx_id } : null,
+  owner: { login: r.owner.login, html_url: r.owner.html_url, avatar_url: r.owner.avatar_url },
+});
+
 async function searchRepoPages(q, onRepo, maxPages = 10) {
   let total = 0;
   for (let page = 1; page <= maxPages; page++) {
@@ -137,7 +145,7 @@ async function searchReposSharded(q, onRepo) {
   return total;
 }
 
-async function discoverByTopicsAndNames() {
+async function discoverByTopicsAndNames(afterEach) {
   const searches = [
     ...TOPICS.map(([t, hint]) => [`topic:${t} archived:false`, hint, `topic:${t}`]),
     ...NAME_SEARCHES.map(([q, hint]) => [`${q} archived:false`, hint, `search:${q.split(" ")[0]}`]),
@@ -146,11 +154,12 @@ async function discoverByTopicsAndNames() {
     const before = candidates.size;
     const total = await searchReposSharded(q, (repo) => {
       const c = candidate(repo.full_name);
-      c.repo = repo;
+      if (!c.done) c.repo = slim(repo);
       c.ev.hints.add(hint);
       c.foundVia.add(via);
     });
     log(`  ${via}: ${total} on GitHub, ${candidates.size - before} new candidates`);
+    await afterEach?.();
   }
 }
 
@@ -387,73 +396,106 @@ async function saveBatch(rows) {
 }
 
 // ---------------------------------------------------------------- main
+// Entries are saved as soon as each source has been searched, so the website
+// fills up continuously instead of waiting for the whole run to finish.
+
+const evidenceKey = (c) => `${[...c.ev.hints].sort()}|${c.ev.skillFiles.size}|${c.ev.pluginFiles.size}|${c.ev.marketplace}`;
 
 async function main() {
   log(`SkillAtlas ingest — ${DRY ? "DRY RUN (no database)" : "saving to database"}${QUICK ? ", QUICK sample" : ""}${gh.authed ? "" : ", no GitHub token"}`);
   const started = Date.now();
   let rateLimited = false;
 
-  try {
-    log("1/4 Curated lists");
-    await discoverFromLists();
-    log("2/4 Topics and names");
-    await discoverByTopicsAndNames();
-    log("3/4 Code search");
-    await discoverByCodeSearch();
-  } catch (err) {
-    if (!(err instanceof RateLimitError)) throw err;
-    rateLimited = true;
-    log(`  ${err.message}`);
-  }
-
-  // Repos we already have metadata for go first (they cost fewer API calls).
-  let list = [...candidates.values()].sort((a, b) => (b.repo?.stargazers_count ?? -1) - (a.repo?.stargazers_count ?? -1));
-  log(`4/4 Processing ${LIMIT ? `${Math.min(LIMIT, list.length)} of ` : ""}${list.length} candidate repositories and ${gpts.size} GPTs`);
-  if (LIMIT) list = list.slice(0, LIMIT);
-
   const existing = await loadExisting();
   const seen = new Set();
   const output = [];
   let buffer = [];
-  let done = 0;
+  let taken = 0;
 
   const flush = async (force) => {
-    if (DRY || (!force && buffer.length < 100)) return;
+    if (DRY || (!force && buffer.length < 50)) return;
     const rows = buffer;
     buffer = [];
     await saveBatch(rows);
   };
+  const keep = (entry) => {
+    stats.saved++;
+    if (DRY) output.push(entry);
+    else buffer.push(entry);
+  };
 
-  try {
+  /** Fetch details for every candidate found so far that has not been handled yet. */
+  async function processNew() {
+    let list = [...candidates.values()].filter((c) => !c.done).sort((a, b) => (b.repo?.stargazers_count ?? -1) - (a.repo?.stargazers_count ?? -1));
+    if (LIMIT) list = list.slice(0, Math.max(0, LIMIT - taken));
+    if (list.length === 0) return;
+    taken += list.length;
+    log(`    → fetching details for ${list.length} repositories…`);
+    let n = 0;
     await pool(list, gh.authed ? 4 : 1, async (c) => {
+      c.done = true;
+      c.evKey = evidenceKey(c);
       const entry = await buildEntry(c, existing);
-      done++;
-      if (done % 250 === 0) log(`  …${done}/${list.length} (${gh.calls()} GitHub requests)`);
+      if (++n % 500 === 0) log(`      …${n}/${list.length} (${stats.saved} saved so far, ${gh.calls()} GitHub requests)`);
+      // Keep only what a later re-classification needs (saves memory).
+      c.meta = c.repo ? { name: c.repo.name, description: c.repo.description, topics: c.repo.topics || [] } : null;
+      c.repo = null;
+      c.readme = undefined;
       if (!entry || seen.has(entry.source_key)) return; // renamed repos can appear twice
       seen.add(entry.source_key);
-      stats.saved++;
-      if (DRY) output.push(entry);
-      else {
-        buffer.push(entry);
-        await flush(false);
-      }
+      c.sourceKey = entry.source_key;
+      c.savedType = entry.type ?? null;
+      keep(entry);
+      await flush(false);
     });
+    await flush(true);
+  }
+
+  try {
+    log("1/4 Curated lists");
+    await discoverFromLists();
+    const usedSlugs = new Set();
+    for (const g of LIMIT ? [...gpts.values()].slice(0, LIMIT) : gpts.values()) {
+      if (usedSlugs.has(g.slug)) continue;
+      usedSlugs.add(g.slug);
+      keep({ ...g, found_via: [...new Set(g.found_via)] });
+    }
+    await flush(true);
+    await processNew();
+
+    log("2/4 Topics and names");
+    await discoverByTopicsAndNames(processNew);
+
+    log("3/4 Code search");
+    await discoverByCodeSearch();
+    await processNew();
+
+    // Code search may prove that something saved earlier is really a skill/plugin/collection.
+    log("4/4 Re-checking types with the new evidence");
+    let fixed = 0;
+    for (const c of candidates.values()) {
+      if (!c.sourceKey || !c.meta || c.evKey === evidenceKey(c)) continue;
+      const type = decideType({ ...c.meta, ev: c.ev });
+      if (!type || type === c.savedType || c.savedType === null) continue;
+      fixed++;
+      if (DRY) {
+        const row = output.find((e) => e.source_key === c.sourceKey);
+        if (row) Object.assign(row, { type, platforms: decidePlatforms({ ...c.meta, type, ev: c.ev }) });
+      } else {
+        await db(`entries?source_key=eq.${encodeURIComponent(c.sourceKey)}`, {
+          method: "PATCH",
+          headers: { Prefer: "return=minimal" },
+          body: JSON.stringify({ type, platforms: decidePlatforms({ ...c.meta, type, ev: c.ev }), found_via: [...c.foundVia].slice(0, 12) }),
+        });
+      }
+    }
+    log(`  ${fixed} entries re-classified`);
   } catch (err) {
     if (!(err instanceof RateLimitError)) throw err;
     rateLimited = true;
     log(`  ${err.message}`);
+    await flush(true);
   }
-
-  const gptRows = (LIMIT ? [...gpts.values()].slice(0, LIMIT) : [...gpts.values()]).map((g) => ({ ...g, found_via: [...new Set(g.found_via)] }));
-  const usedSlugs = new Set();
-  for (const g of gptRows) {
-    if (usedSlugs.has(g.slug)) continue;
-    usedSlugs.add(g.slug);
-    stats.saved++;
-    if (DRY) output.push(g);
-    else buffer.push(g);
-  }
-  await flush(true);
 
   if (DRY) {
     mkdirSync("data", { recursive: true });
@@ -464,11 +506,11 @@ async function main() {
   const byType = {};
   for (const e of output) byType[e.type] = (byType[e.type] || 0) + 1;
   log("\nSummary");
-  log(`  entries saved:      ${stats.saved}${DRY ? ` ${JSON.stringify(byType)}` : ""}`);
-  log(`  unchanged (kept):   ${stats.unchanged}`);
+  log(`  candidates found:   ${candidates.size} repositories, ${gpts.size} GPTs`);
+  log(`  entries saved:      ${stats.saved}${DRY ? ` ${JSON.stringify(byType)}` : ""} (of which ${stats.unchanged} unchanged, numbers refreshed)`);
   log(`  skipped:            ${JSON.stringify(stats.skipped)}`);
   log(`  GitHub requests:    ${gh.calls()}`);
-  log(`  time:               ${Math.round((Date.now() - started) / 1000)}s`);
+  log(`  time:               ${Math.round((Date.now() - started) / 60000)} min`);
   if (rateLimited) log("  NOTE: stopped early because of the GitHub rate limit.");
 }
 

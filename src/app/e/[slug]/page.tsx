@@ -1,12 +1,13 @@
-// Basic detail page. The full version (rendered README, install box, related
-// entries) is built in the next stage.
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { CopyButton } from "@/components/CopyButton";
+import { Avatar, EntryCard, TypeBadge } from "@/components/EntryCard";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { Readme } from "@/components/Readme";
 import { label } from "@/lib/categories";
-import { getEntry } from "@/lib/db";
+import { type Entry, getEntry, getReadme, getRelated } from "@/lib/db";
 import { formatDate, formatStars } from "@/lib/format";
 
 export async function generateMetadata({ params }: PageProps<"/e/[slug]">): Promise<Metadata> {
@@ -15,75 +16,233 @@ export async function generateMetadata({ params }: PageProps<"/e/[slug]">): Prom
   return { title: `${entry.name} by ${entry.author}`, description: entry.description ?? undefined };
 }
 
+const external = { target: "_blank", rel: "noopener noreferrer nofollow" } as const;
+const card = "rounded-3xl border border-line bg-surface p-5 shadow-card sm:p-8";
+const button = "inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-semibold";
+const secondary = `${button} border border-line bg-surface shadow-card hover:border-accent hover:text-accent`;
+
+const WHAT_IT_IS: Record<string, string> = {
+  skill: "A skill is a set of instructions and files that teaches the AI how to do one kind of task well.",
+  plugin: "A plugin adds new commands, skills or tools to Claude Code in one install.",
+  collection: "A collection gathers many skills or plugins in one place, so you can browse and pick what you need.",
+  mcp: "An MCP server (app / connector) lets the AI work with another tool or service on your behalf.",
+  gpt: "A custom GPT is a ready-made version of ChatGPT set up for one particular job.",
+};
+
+function Icon({ d }: { d: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={d} />
+    </svg>
+  );
+}
+
+function Fact({ name, children }: { name: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl bg-accent-soft/60 px-4 py-3">
+      <dt className="text-xs font-semibold uppercase tracking-wide text-muted">{name}</dt>
+      <dd className="mt-0.5 truncate text-base font-bold">{children}</dd>
+    </div>
+  );
+}
+
+function Chips({ title, items, param }: { title: string; items: string[]; param: string }) {
+  if (items.length === 0) return null;
+  return (
+    <div>
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">{title}</h3>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {items.map((s) => (
+          <Link key={s} href={`/?${param}=${s}`} className="rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm font-semibold hover:border-accent hover:text-accent">
+            {label(s)}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+async function CreatorReadme({ entry }: { entry: Entry }) {
+  const { text, complete } = await getReadme(entry);
+  if (!text?.trim()) {
+    return <p className="text-muted">The creator has not published a longer description. Open the original page for details.</p>;
+  }
+  return (
+    <>
+      <Readme markdown={text} githubUrl={entry.github_url} branch={entry.default_branch} />
+      {!complete && entry.github_url && (
+        <p className="mt-6 rounded-2xl bg-accent-soft px-4 py-3 text-sm font-medium">
+          This description is shortened here.{" "}
+          <a href={`${entry.github_url}#readme`} {...external} className="font-semibold text-accent hover:underline">
+            Read the rest on GitHub →
+          </a>
+        </p>
+      )}
+    </>
+  );
+}
+
+async function Related({ entry }: { entry: Entry }) {
+  const related = await getRelated(entry).catch(() => []);
+  if (related.length === 0) return null;
+  return (
+    <section aria-labelledby="related">
+      <h2 id="related" className="text-2xl font-extrabold tracking-tight">
+        More like this
+      </h2>
+      <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+        {related.map((e) => (
+          <li key={e.slug}>
+            <EntryCard entry={e} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 async function EntryDetail({ params }: Pick<PageProps<"/e/[slug]">, "params">) {
   const entry = await getEntry((await params).slug);
   if (!entry) notFound();
   const updated = formatDate(entry.last_updated);
-  const button = "inline-flex h-11 items-center rounded-full px-5 text-sm font-medium";
+  const isGpt = entry.type === "gpt";
+  const sourceList = entry.found_via.find((v) => v.startsWith("list:") && v !== "list:self")?.slice(5);
 
   return (
-    <article className="mx-auto flex max-w-3xl flex-col gap-5">
-      <Link href="/" className="text-sm font-medium text-accent hover:underline">
+    <div className="flex flex-col gap-8">
+      <Link href="/" className="self-start text-sm font-semibold text-accent hover:underline">
         ← Back to the directory
       </Link>
-      <header className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">{entry.name}</h1>
-          <p className="mt-1 text-muted">
-            by{" "}
-            {entry.author_url ? (
-              <a href={entry.author_url} target="_blank" rel="noopener noreferrer nofollow" className="font-medium text-ink underline decoration-line underline-offset-4 hover:decoration-accent">
-                {entry.author}
-              </a>
-            ) : (
-              <span className="font-medium text-ink">{entry.author}</span>
-            )}
-          </p>
+
+      {/* Summary: what it is, who made it, where to get it */}
+      <header className={card}>
+        <div className="flex items-start gap-4">
+          <Avatar entry={entry} size={64} />
+          <div className="min-w-0 flex-1">
+            <h1 className="break-words text-2xl font-extrabold leading-tight tracking-tight sm:text-4xl">{entry.name}</h1>
+            <p className="mt-1 text-base text-muted">
+              by{" "}
+              {entry.author_url ? (
+                <a href={entry.author_url} {...external} className="font-semibold text-accent hover:underline">
+                  {entry.author}
+                </a>
+              ) : (
+                <span className="font-semibold text-ink">{entry.author}</span>
+              )}
+            </p>
+          </div>
+          <FavoriteButton slug={entry.slug} name={entry.name} className="border border-line" />
         </div>
-        <FavoriteButton slug={entry.slug} name={entry.name} />
+
+        <div className="mt-5 flex flex-wrap items-center gap-2.5">
+          <TypeBadge type={entry.type} />
+          <span className="text-sm font-semibold text-muted">Works with {entry.platforms.map(label).join(" and ")}</span>
+        </div>
+
+        <p className="mt-5 text-lg leading-relaxed">{entry.description || "No short description provided by the author."}</p>
+        <p className="mt-2 text-[15px] leading-relaxed text-muted">{WHAT_IT_IS[entry.type]}</p>
+
+        <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {!isGpt && <Fact name="GitHub stars">★ {formatStars(entry.stars)}</Fact>}
+          {updated && <Fact name="Last updated">{updated}</Fact>}
+          {!isGpt && <Fact name="License">{entry.license ?? "Not stated"}</Fact>}
+          <Fact name="Made by">{entry.author}</Fact>
+        </dl>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          {entry.github_url && (
+            <a href={entry.github_url} {...external} className={`${button} btn-primary shadow-card`}>
+              <Icon d="M14 5h5v5M19 5l-8 8M11 7H6v11h11v-5" />
+              Open on GitHub
+            </a>
+          )}
+          {entry.github_url && (
+            <a href={`${entry.github_url}/archive/HEAD.zip`} rel="noopener noreferrer nofollow" className={secondary} title="Downloads the latest version as a ZIP file, straight from the creator's GitHub repository">
+              <Icon d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" />
+              Download ZIP
+            </a>
+          )}
+          {entry.homepage_url && (
+            <a href={entry.homepage_url} {...external} className={entry.github_url ? secondary : `${button} btn-primary shadow-card`}>
+              <Icon d={isGpt ? "M14 5h5v5M19 5l-8 8M11 7H6v11h11v-5" : "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9S14.5 18.400 12 21c-2.5-2.600-3.800-5.600-3.800-9S9.500 5.600 12 3Z"} />
+              {isGpt ? "Open in ChatGPT" : "Creator's site"}
+            </a>
+          )}
+        </div>
+        {entry.github_url && (
+          <p className="mt-3 text-sm text-muted">
+            The download comes straight from {entry.author}&apos;s GitHub repository — SkillAtlas hosts no files. Review anything you
+            download before running it.
+          </p>
+        )}
       </header>
 
-      <p className="text-base leading-relaxed">{entry.description || "No description provided by the author."}</p>
+      {/* Install */}
+      {entry.install_command && (
+        <section aria-labelledby="install" className={card}>
+          <h2 id="install" className="text-2xl font-extrabold tracking-tight">
+            How to install
+          </h2>
+          <p className="mt-2 text-[15px] text-muted">Copy this command, as given by the creator. Full setup and usage instructions are in their description below.</p>
+          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#231a3a] p-3 pl-5">
+            <code className="no-scrollbar min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-sm text-[#f1ecff]">{entry.install_command}</code>
+            <CopyButton text={entry.install_command} />
+          </div>
+        </section>
+      )}
 
-      <div className="flex flex-wrap gap-1.5 text-xs font-medium">
-        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-accent">{label(entry.type)}</span>
-        {[...entry.platforms, ...entry.professions, ...entry.tasks].map((s) => (
-          <span key={s} className="rounded-full border border-line px-2 py-0.5 text-muted">
-            {label(s)}
-          </span>
-        ))}
-      </div>
+      {/* Categories */}
+      {(entry.professions.length > 0 || entry.tasks.length > 0) && (
+        <section aria-label="Categories" className={`${card} flex flex-col gap-5 sm:flex-row sm:gap-12`}>
+          <Chips title="Good for" items={entry.professions} param="profession" />
+          <Chips title="Helps with" items={entry.tasks} param="task" />
+        </section>
+      )}
 
-      <p className="text-sm text-muted">
-        {[entry.type !== "gpt" ? `${formatStars(entry.stars)} stars` : null, updated ? `Updated ${updated}` : null, entry.license ? `License: ${entry.license}` : null]
-          .filter(Boolean)
-          .join(" · ")}
-      </p>
+      {/* The creator's own description */}
+      {!isGpt && (
+        <section aria-labelledby="readme" className={card}>
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-line pb-5">
+            <div>
+              <h2 id="readme" className="text-2xl font-extrabold tracking-tight">
+                Full description from the creator
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                Written by {entry.author}. Shown here unchanged, with credit — all rights stay with the author.
+              </p>
+            </div>
+            {entry.github_url && (
+              <a href={`${entry.github_url}#readme`} {...external} className="text-sm font-semibold text-accent hover:underline">
+                View original →
+              </a>
+            )}
+          </div>
+          <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-line/60" role="status" aria-label="Loading description" />}>
+            <CreatorReadme entry={entry} />
+          </Suspense>
+        </section>
+      )}
 
-      <div className="flex flex-wrap gap-3">
-        {entry.github_url && (
-          <a href={entry.github_url} target="_blank" rel="noopener noreferrer nofollow" className={`${button} bg-accent text-on-accent hover:opacity-90`}>
-            Open on GitHub
+      {sourceList && (
+        <p className="text-sm text-muted">
+          Found via the list{" "}
+          <a href={`https://github.com/${sourceList}`} {...external} className="font-semibold text-accent hover:underline">
+            {sourceList}
           </a>
-        )}
-        {entry.homepage_url && (
-          <a
-            href={entry.homepage_url}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className={`${button} ${entry.github_url ? "border border-line bg-surface hover:border-accent" : "bg-accent text-on-accent hover:opacity-90"}`}
-          >
-            {entry.type === "gpt" ? "Open in ChatGPT" : "Creator's site"}
-          </a>
-        )}
-      </div>
-    </article>
+          .
+        </p>
+      )}
+
+      <Suspense fallback={null}>
+        <Related entry={entry} />
+      </Suspense>
+    </div>
   );
 }
 
 export default function EntryPage({ params }: PageProps<"/e/[slug]">) {
   return (
-    <Suspense fallback={<div className="mx-auto h-64 max-w-3xl animate-pulse rounded-2xl bg-line/60" role="status" aria-label="Loading" />}>
+    <Suspense fallback={<div className="h-96 animate-pulse rounded-3xl bg-line/60" role="status" aria-label="Loading" />}>
       <EntryDetail params={params} />
     </Suspense>
   );

@@ -78,3 +78,39 @@ export async function getEntry(slug: string): Promise<Entry | null> {
   const { rows } = await query<Entry>(`entries?${qs}`);
   return rows[0] ?? null;
 }
+
+/** Other entries of the same type for the same kind of people, most popular first. */
+export async function getRelated(entry: Pick<Entry, "slug" | "type" | "professions">): Promise<EntryCardData[]> {
+  "use cache";
+  cacheLife("hours");
+  const qs = new URLSearchParams({ select: CARD_COLUMNS, type: `eq.${entry.type}`, slug: `neq.${entry.slug}`, order: "stars.desc,id.asc", limit: "6" });
+  const valid = entry.professions.filter((p) => isValid(PROFESSIONS, p));
+  if (valid.length) qs.set("professions", `ov.{${valid.join(",")}}`);
+  const { rows } = await query<EntryCardData>(`entries?${qs}`);
+  return rows;
+}
+
+/**
+ * The creator's full, current README straight from GitHub (cached for a day).
+ * Falls back to the copy stored in our database, which may be shortened.
+ */
+export async function getReadme(entry: Pick<Entry, "github_url" | "readme">): Promise<{ text: string | null; complete: boolean }> {
+  "use cache";
+  cacheLife("days");
+  const repo = entry.github_url?.match(/^https:\/\/github\.com\/([^/]+\/[^/]+)$/)?.[1];
+  if (repo) {
+    try {
+      const token = process.env.GITHUB_TOKEN;
+      const res = await fetch(`https://api.github.com/repos/${repo}/readme`, {
+        headers: { Accept: "application/vnd.github.raw+json", "User-Agent": "skillatlas", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      if (res.ok) {
+        const text = (await res.text()).slice(0, 150_000);
+        if (text.trim()) return { text, complete: true };
+      }
+    } catch {
+      /* GitHub unreachable: use our stored copy */
+    }
+  }
+  return { text: entry.readme, complete: (entry.readme?.length ?? 0) < 19_000 };
+}
