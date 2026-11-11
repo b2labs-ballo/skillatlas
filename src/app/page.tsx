@@ -1,69 +1,126 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Suspense } from "react";
+import { EntryCard } from "@/components/EntryCard";
+import { Filters, type FilterState } from "@/components/Filters";
+import { listEntries, PAGE_SIZE } from "@/lib/db";
 
-export default function Home() {
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+
+async function Directory({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
+  const sp = await searchParams;
+  const filters: FilterState = {
+    q: one(sp.q).slice(0, 100),
+    platform: one(sp.platform),
+    type: one(sp.type),
+    profession: one(sp.profession),
+    task: one(sp.task),
+    sort: one(sp.sort) === "newest" ? "newest" : "stars",
+  };
+  const page = Math.max(1, Number.parseInt(one(sp.page), 10) || 1);
+
+  let entries: Awaited<ReturnType<typeof listEntries>>["entries"] = [];
+  let total = 0;
+  let failed = false;
+  try {
+    ({ entries, total } = await listEntries({ ...filters, page }));
+  } catch {
+    failed = true;
+  }
+
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const hasFilters = Boolean(filters.q || filters.platform || filters.type || filters.profession || filters.task);
+  const pageUrl = (n: number) => {
+    const qs = new URLSearchParams();
+    for (const [k, v] of Object.entries(filters)) if (v && !(k === "sort" && v === "stars")) qs.set(k, v);
+    if (n > 1) qs.set("page", String(n));
+    const s = qs.toString();
+    return s ? `/?${s}` : "/";
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <>
+      <Filters initial={filters} />
+
+      <div className="flex items-center justify-between gap-3 text-sm text-muted" aria-live="polite">
+        <p>
+          {failed ? "" : `${total.toLocaleString("en")} ${total === 1 ? "result" : "results"}`}
+          {!failed && pages > 1 ? ` · page ${Math.min(page, pages)} of ${pages.toLocaleString("en")}` : ""}
+        </p>
+        {hasFilters && (
+          <Link href="/" className="font-medium text-accent hover:underline">
+            Clear filters
+          </Link>
+        )}
+      </div>
+
+      {failed ? (
+        <p className="rounded-2xl border border-line bg-surface p-6 text-center text-muted">
+          The directory could not be loaded right now. Please try again in a moment.
+        </p>
+      ) : entries.length === 0 ? (
+        <p className="rounded-2xl border border-line bg-surface p-6 text-center text-muted">
+          Nothing matches yet. Try a shorter search or remove a filter.
+        </p>
+      ) : (
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {entries.map((e) => (
+            <li key={e.slug}>
+              <EntryCard entry={e} />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {!failed && pages > 1 && (
+        <nav aria-label="Pages" className="flex items-center justify-center gap-3 pt-2">
+          {page > 1 ? (
+            <Link href={pageUrl(page - 1)} className="h-11 rounded-full border border-line bg-surface px-5 text-sm font-medium leading-[2.6rem] hover:border-accent">
+              ← Previous
+            </Link>
+          ) : (
+            <span className="h-11 rounded-full border border-line px-5 text-sm font-medium leading-[2.6rem] text-muted opacity-50">← Previous</span>
+          )}
+          {page < pages ? (
+            <Link href={pageUrl(page + 1)} className="h-11 rounded-full bg-accent px-5 text-sm font-medium leading-[2.75rem] text-on-accent hover:opacity-90">
+              Next →
+            </Link>
+          ) : (
+            <span className="h-11 rounded-full border border-line px-5 text-sm font-medium leading-[2.6rem] text-muted opacity-50">Next →</span>
+          )}
+        </nav>
+      )}
+    </>
+  );
+}
+
+/** Grey placeholder shown for a moment while results load. */
+function DirectorySkeleton() {
+  return (
+    <div className="flex flex-col gap-3" role="status" aria-label="Loading the directory">
+      <div className="h-12 animate-pulse rounded-2xl bg-line/60" />
+      <div className="h-10 w-2/3 animate-pulse rounded-full bg-line/60" />
+      <div className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="h-44 animate-pulse rounded-2xl bg-line/60" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function Home({ searchParams }: PageProps<"/">) {
+  return (
+    <div className="flex flex-col gap-5">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Find a skill for the job</h1>
+        <p className="mt-1 text-sm text-muted sm:text-base">
+          Community-made skills, plugins, MCP servers and custom GPTs for Claude and ChatGPT — each one credited and linked
+          to its creator.
+        </p>
+      </div>
+      <Suspense fallback={<DirectorySkeleton />}>
+        <Directory searchParams={searchParams} />
+      </Suspense>
     </div>
   );
 }
