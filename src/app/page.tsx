@@ -54,11 +54,11 @@ async function Directory({ searchParams }: Pick<PageProps<"/">, "searchParams">)
       </div>
 
       {failed ? (
-        <p className="rounded-3xl bg-surface p-8 text-center text-muted">
+        <p className="rounded-3xl tile p-8 text-center text-muted">
           The directory could not be loaded right now. Please try again in a moment.
         </p>
       ) : entries.length === 0 ? (
-        <p className="rounded-3xl bg-surface p-8 text-center text-muted">
+        <p className="rounded-3xl tile p-8 text-center text-muted">
           Nothing matches yet. Try a shorter search or remove a filter.
         </p>
       ) : (

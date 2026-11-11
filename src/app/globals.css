@@ -26,12 +26,14 @@
 
 /* Light version */
 :root {
-  --bg: #f9f9f9;
+  --bg: #e9ebf0;
   --surface: #ffffff;
-  --surface-hover: #f2f2f2;
-  --chip: #ececec;
-  --chip-hover: #dedede;
-  --line: #e2e2e2;
+  --surface-hover: #f5f6fa;
+  --chip: #d9dce5;
+  --chip-hover: #c8ccd8;
+  --line: #cfd3dd;
+  --tile-border: #d3d7e0;
+  --tile-shadow: 0 1px 2px rgb(20 25 45 / 0.06), 0 8px 20px -12px rgb(20 25 45 / 0.28);
   --ink: #0f0f0f;
   --muted: #606060;
   --accent: #e0241b;
@@ -49,6 +51,8 @@
   --chip: #272727;
   --chip-hover: #3a3a3a;
   --line: #303030;
+  --tile-border: transparent;
+  --tile-shadow: none;
   --ink: #f1f1f1;
   --muted: #aaaaaa;
   --accent: #ff4e45;
@@ -64,6 +68,15 @@ body {
   /* One soft red glow behind the page title. */
   background-image: radial-gradient(46rem 22rem at 50% -7rem, var(--glow), transparent 70%);
   background-repeat: no-repeat;
+}
+
+/* Cards and panels: outlined and lifted in light mode, flat in dark mode. */
+@layer components {
+  .tile {
+    background-color: var(--surface);
+    border: 1px solid var(--tile-border);
+    box-shadow: var(--tile-shadow);
+  }
 }
 
 h1,

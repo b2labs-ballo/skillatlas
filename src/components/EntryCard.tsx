@@ -29,7 +29,7 @@ export function TypeBadge({ type }: { type: string }) {
 
 export function EntryCard({ entry }: { entry: EntryCardData }) {
   return (
-    <article className="relative flex h-full flex-col gap-3.5 rounded-2xl bg-surface p-5 transition-colors duration-200 hover:bg-surface-hover">
+    <article className="relative flex h-full flex-col gap-3.5 tile rounded-2xl p-5 transition-colors duration-200 hover:bg-surface-hover">
       <div className="flex items-center gap-3.5 pr-9">
         <Avatar entry={entry} size={44} />
         <div className="min-w-0">

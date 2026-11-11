@@ -1,193 +1,73 @@
 {
   "platforms": [
-    {
-      "slug": "claude",
-      "label": "Claude"
-    },
-    {
-      "slug": "chatgpt",
-      "label": "ChatGPT"
-    },
-    {
-      "slug": "gemini",
-      "label": "Gemini"
-    },
-    {
-      "slug": "cursor",
-      "label": "Cursor"
-    },
-    {
-      "slug": "copilot",
-      "label": "GitHub Copilot"
-    },
-    {
-      "slug": "local",
-      "label": "Local / any model"
-    }
+    {"slug": "claude", "label": "Claude"},
+    {"slug": "chatgpt", "label": "ChatGPT"},
+    {"slug": "gemini", "label": "Gemini"},
+    {"slug": "cursor", "label": "Cursor"},
+    {"slug": "copilot", "label": "GitHub Copilot"},
+    {"slug": "local", "label": "Local / any model"}
   ],
   "types": [
-    {
-      "slug": "skill",
-      "label": "Skill"
-    },
-    {
-      "slug": "plugin",
-      "label": "Plugin"
-    },
-    {
-      "slug": "mcp",
-      "label": "App / Connector (MCP)"
-    },
-    {
-      "slug": "subagent",
-      "label": "Subagent / Command"
-    },
-    {
-      "slug": "prompt",
-      "label": "Prompts & Rules"
-    },
-    {
-      "slug": "agent",
-      "label": "Coding agent"
-    },
-    {
-      "slug": "local-app",
-      "label": "Local app"
-    },
-    {
-      "slug": "extension",
-      "label": "Editor extension"
-    },
-    {
-      "slug": "model",
-      "label": "Local model"
-    },
-    {
-      "slug": "gpt",
-      "label": "Custom GPT"
-    },
-    {
-      "slug": "collection",
-      "label": "Collection"
-    }
+    {"slug": "skill", "label": "Skill"},
+    {"slug": "plugin", "label": "Plugin"},
+    {"slug": "mcp", "label": "App / Connector (MCP)"},
+    {"slug": "subagent", "label": "Subagent / Command"},
+    {"slug": "prompt", "label": "Prompts & Rules"},
+    {"slug": "agent", "label": "Coding agent"},
+    {"slug": "local-app", "label": "Local app"},
+    {"slug": "extension", "label": "Editor extension"},
+    {"slug": "model", "label": "Local model"},
+    {"slug": "gpt", "label": "Custom GPT"},
+    {"slug": "collection", "label": "Collection"}
   ],
   "professions": [
-    {
-      "slug": "developers",
-      "label": "Developers",
-      "keywords": ["developer", "programming", "code review", "coding", "software", "git", "github", "api", "sdk", "cli", "typescript", "javascript", "python", "rust", "golang", "debug", "refactor", "devops", "kubernetes", "docker", "database", "sql", "backend", "frontend", "terminal", "ide", "compiler", "pull request"]
-    },
-    {
-      "slug": "marketing-sales",
-      "label": "Marketing & Sales",
-      "keywords": ["marketing", "seo", "sales", "crm", "lead generation", "leads", "advertising", "ads", "campaign", "social media", "newsletter", "copywriting", "brand", "hubspot", "salesforce", "ecommerce", "shopify", "outreach", "linkedin"]
-    },
-    {
-      "slug": "writers-content",
-      "label": "Writers & Content",
-      "keywords": ["writer", "writing", "blog", "article", "content creation", "editor", "proofread", "storytelling", "novel", "fiction", "screenplay", "podcast", "youtube", "transcript", "obsidian", "notes", "markdown"]
-    },
-    {
-      "slug": "legal",
-      "label": "Legal",
-      "keywords": ["legal", "lawyer", "law", "contract", "compliance", "gdpr", "patent", "litigation", "attorney", "regulation", "nda", "court"]
-    },
-    {
-      "slug": "data-research",
-      "label": "Data & Research",
-      "keywords": ["research", "data science", "dataset", "analytics", "statistics", "paper", "arxiv", "pubmed", "scientific", "academic", "literature review", "machine learning", "pandas", "jupyter", "bigquery", "web search", "scraping", "crawler"]
-    },
-    {
-      "slug": "design-creative",
-      "label": "Design & Creative",
-      "keywords": ["design", "figma", "ui/ux", "ux", "illustration", "image generation", "art", "creative", "animation", "video editing", "music", "3d", "blender", "canva", "photoshop", "svg", "logo", "typography"]
-    },
-    {
-      "slug": "business-ops",
-      "label": "Business & Ops",
-      "keywords": ["business", "operations", "project management", "productivity", "jira", "notion", "slack", "calendar", "email", "gmail", "meeting", "workflow", "startup", "strategy", "product manager", "customer support", "spreadsheet", "excel", "airtable", "trello", "asana", "linear"]
-    },
-    {
-      "slug": "security",
-      "label": "Security",
-      "keywords": ["security", "pentest", "penetration testing", "vulnerability", "cve", "malware analysis", "threat", "osint", "ctf", "forensics", "audit", "owasp", "exploit", "reverse engineering", "siem"]
-    },
-    {
-      "slug": "finance",
-      "label": "Finance",
-      "keywords": ["finance", "financial", "accounting", "stock", "trading", "crypto", "blockchain", "invoice", "tax", "budget", "banking", "investment", "payments", "stripe", "bookkeeping", "defi"]
-    },
-    {
-      "slug": "hr",
-      "label": "HR",
-      "keywords": ["human resources", "recruiting", "recruitment", "hiring", "resume", "interview", "onboarding", "payroll", "job search", "candidate", "career"]
-    },
-    {
-      "slug": "teachers",
-      "label": "Teachers",
-      "keywords": ["teacher", "teaching", "education", "classroom", "lesson plan", "curriculum", "tutor", "course", "quiz", "grading", "e-learning"]
-    },
-    {
-      "slug": "healthcare",
-      "label": "Healthcare",
-      "keywords": ["health", "healthcare", "medical", "clinical", "patient", "doctor", "fhir", "biomedical", "pharma", "nutrition", "fitness", "mental health", "genomics", "bioinformatics"]
-    },
-    {
-      "slug": "students",
-      "label": "Students",
-      "keywords": ["student", "study", "homework", "exam", "flashcards", "anki", "learning", "thesis", "essay", "university", "math"]
-    },
-    {
-      "slug": "everyone",
-      "label": "Everyone",
-      "keywords": []
-    }
+    {"slug": "web-dev", "label": "Web developers", "group": "Software", "keywords": ["web development", "web developer", "frontend", "front end", "react", "nextjs", "next.js", "vue", "svelte", "angular", "html", "css", "tailwind", "javascript", "typescript", "web app", "website", "wordpress", "browser extension"]},
+    {"slug": "backend-dev", "label": "Backend & API developers", "group": "Software", "keywords": ["backend", "back end", "rest api", "graphql", "api development", "openapi", "database", "sql", "postgres", "mysql", "mongodb", "redis", "microservices", "node.js", "django", "fastapi", "spring boot", "golang", "rust"]},
+    {"slug": "mobile-dev", "label": "Mobile developers", "group": "Software", "keywords": ["mobile app", "mobile development", "ios", "android", "swift", "swiftui", "kotlin", "react native", "flutter", "expo", "xcode"]},
+    {"slug": "devops", "label": "DevOps & cloud engineers", "group": "Software", "keywords": ["devops", "kubernetes", "docker", "terraform", "aws", "azure", "gcp", "google cloud", "ci/cd", "infrastructure", "monitoring", "observability", "deployment", "linux", "sre", "ansible", "helm"]},
+    {"slug": "ai-engineers", "label": "AI & ML engineers", "group": "Software", "keywords": ["machine learning", "llm", "rag", "fine tuning", "fine-tuning", "embeddings", "ai agents", "agent framework", "prompt engineering", "model training", "pytorch", "tensorflow", "langchain", "vector database", "inference", "multi agent"]},
+    {"slug": "game-dev", "label": "Game developers", "group": "Software", "keywords": ["game development", "gamedev", "game dev", "game engine", "unity", "unreal engine", "godot", "roblox", "minecraft"]},
+    {"slug": "qa", "label": "QA & testers", "group": "Software", "keywords": ["testing", "qa", "e2e", "end to end", "playwright", "unit test", "test automation", "selenium", "cypress", "tdd", "pytest", "jest"]},
+    {"slug": "security", "label": "Security specialists", "group": "Software", "keywords": ["security", "pentest", "penetration testing", "vulnerability", "cve", "malware analysis", "threat", "osint", "ctf", "forensics", "owasp", "exploit", "reverse engineering", "siem"]},
+    {"slug": "developers", "label": "Developers (general)", "group": "Software", "keywords": ["developer", "programming", "coding", "software engineering", "git", "github", "cli", "sdk", "debug", "refactor", "code review", "terminal", "ide", "pull request", "claude code", "codex", "cursor"]},
+    {"slug": "web-design", "label": "Web designers", "group": "Design & media", "keywords": ["web design", "website design", "landing page", "ui design", "webflow", "framer", "figma", "design system", "responsive design", "tailwind", "css"]},
+    {"slug": "ui-ux", "label": "UI/UX designers", "group": "Design & media", "keywords": ["ux", "ui/ux", "user experience", "figma", "wireframe", "prototype", "user research", "design system", "usability", "accessibility"]},
+    {"slug": "graphic-design", "label": "Graphic designers & illustrators", "group": "Design & media", "keywords": ["graphic design", "illustration", "logo", "branding", "image generation", "photoshop", "canva", "svg", "poster", "typography", "digital art", "midjourney", "stable diffusion", "comfyui"]},
+    {"slug": "video-audio", "label": "Video & audio creators", "group": "Design & media", "keywords": ["video", "video editing", "youtube", "podcast", "audio", "music", "transcription", "subtitles", "text to speech", "tts", "voice", "ffmpeg", "remotion"]},
+    {"slug": "3d-cad", "label": "3D & CAD", "group": "Design & media", "keywords": ["blender", "3d", "cad", "3d printing", "autocad", "fusion 360", "freecad", "openscad"]},
+    {"slug": "seo", "label": "SEO specialists", "group": "Marketing & sales", "keywords": ["seo", "keyword research", "backlinks", "search console", "serp", "search engine optimization"]},
+    {"slug": "social-media", "label": "Social media managers", "group": "Marketing & sales", "keywords": ["social media", "twitter", "linkedin", "instagram", "tiktok", "facebook", "reddit", "threads", "bluesky"]},
+    {"slug": "marketing", "label": "Marketers", "group": "Marketing & sales", "keywords": ["marketing", "campaign", "advertising", "google ads", "newsletter", "email marketing", "brand", "growth", "conversion", "analytics"]},
+    {"slug": "copywriters", "label": "Copywriters & content creators", "group": "Marketing & sales", "keywords": ["copywriting", "copywriter", "blog", "content creation", "content marketing", "article", "content writing"]},
+    {"slug": "sales", "label": "Sales & CRM", "group": "Marketing & sales", "keywords": ["sales", "crm", "lead generation", "leads", "hubspot", "salesforce", "outreach", "prospecting", "cold email"]},
+    {"slug": "ecommerce", "label": "E-commerce sellers", "group": "Marketing & sales", "keywords": ["ecommerce", "e commerce", "e-commerce", "shopify", "woocommerce", "amazon seller", "product listing", "online store", "etsy"]},
+    {"slug": "writers", "label": "Writers & authors", "group": "Writing", "keywords": ["writer", "writing", "novel", "fiction", "storytelling", "screenplay", "proofread", "ghostwriting", "author", "obsidian"]},
+    {"slug": "translators", "label": "Translators", "group": "Writing", "keywords": ["translate", "translation", "translator", "localization", "i18n", "multilingual"]},
+    {"slug": "founders", "label": "Founders & startups", "group": "Business", "keywords": ["startup", "founder", "business plan", "pitch deck", "fundraising", "saas", "entrepreneur", "indie hacker"]},
+    {"slug": "product-managers", "label": "Product managers", "group": "Business", "keywords": ["product manager", "product management", "roadmap", "prd", "user stories", "requirements", "jira", "linear"]},
+    {"slug": "project-managers", "label": "Project managers", "group": "Business", "keywords": ["project management", "project manager", "kanban", "trello", "asana", "notion", "meeting notes", "clickup", "monday.com"]},
+    {"slug": "customer-support", "label": "Customer support", "group": "Business", "keywords": ["customer support", "customer service", "helpdesk", "zendesk", "intercom", "support tickets", "faq"]},
+    {"slug": "office", "label": "Office & admin", "group": "Business", "keywords": ["email", "gmail", "calendar", "spreadsheet", "excel", "google sheets", "productivity", "outlook", "google workspace", "pdf", "docx", "powerpoint", "slack", "microsoft 365"]},
+    {"slug": "finance", "label": "Finance & accounting", "group": "Business", "keywords": ["finance", "financial", "accounting", "stock", "trading", "crypto", "blockchain", "invoice", "tax", "budget", "banking", "investment", "payments", "stripe", "bookkeeping", "defi"]},
+    {"slug": "legal", "label": "Legal", "group": "Business", "keywords": ["legal", "lawyer", "law", "contract", "compliance", "gdpr", "patent", "litigation", "attorney", "regulation", "nda"]},
+    {"slug": "hr", "label": "HR & recruiting", "group": "Business", "keywords": ["human resources", "recruiting", "recruitment", "hiring", "resume", "interview", "onboarding", "payroll", "job search", "candidate", "career"]},
+    {"slug": "real-estate", "label": "Real estate", "group": "Business", "keywords": ["real estate", "property", "mortgage", "realtor", "rental"]},
+    {"slug": "data-analysts", "label": "Data analysts", "group": "Data & science", "keywords": ["data analysis", "data analyst", "analytics", "dashboard", "bigquery", "snowflake", "pandas", "data visualization", "statistics", "tableau", "dataset", "data science", "jupyter", "sql"]},
+    {"slug": "researchers", "label": "Researchers & scientists", "group": "Data & science", "keywords": ["research", "paper", "arxiv", "pubmed", "scientific", "academic", "literature review", "citation", "bioinformatics", "chemistry", "physics", "zotero"]},
+    {"slug": "teachers", "label": "Teachers", "group": "Education & health", "keywords": ["teacher", "teaching", "education", "classroom", "lesson plan", "curriculum", "tutor", "course", "quiz", "grading", "e-learning"]},
+    {"slug": "students", "label": "Students", "group": "Education & health", "keywords": ["student", "study", "homework", "exam", "flashcards", "anki", "thesis", "essay", "university", "math"]},
+    {"slug": "healthcare", "label": "Healthcare", "group": "Education & health", "keywords": ["health", "healthcare", "medical", "clinical", "patient", "doctor", "fhir", "biomedical", "pharma", "nutrition", "fitness", "mental health", "genomics"]},
+    {"slug": "everyone", "label": "Everyone", "group": "General", "keywords": []}
   ],
   "tasks": [
-    {
-      "slug": "coding",
-      "label": "Coding",
-      "keywords": ["code", "coding", "programming", "refactor", "debug", "git", "pull request", "typescript", "python", "javascript", "rust", "compiler", "lint", "ide", "repository", "sdk"]
-    },
-    {
-      "slug": "documents-files",
-      "label": "Documents & files",
-      "keywords": ["pdf", "docx", "document", "file system", "filesystem", "files", "excel", "xlsx", "spreadsheet", "pptx", "powerpoint", "word", "google drive", "ocr", "csv", "markdown"]
-    },
-    {
-      "slug": "research",
-      "label": "Research",
-      "keywords": ["research", "web search", "search engine", "arxiv", "paper", "literature", "wikipedia", "browse", "crawl", "scrape", "fact check", "knowledge base", "rag"]
-    },
-    {
-      "slug": "data-analysis",
-      "label": "Data analysis",
-      "keywords": ["data analysis", "analytics", "sql", "database", "postgres", "bigquery", "snowflake", "pandas", "chart", "dashboard", "statistics", "visualization", "metrics", "dataset"]
-    },
-    {
-      "slug": "writing",
-      "label": "Writing",
-      "keywords": ["writing", "copywriting", "blog", "article", "email", "proofread", "translate", "translation", "summarize", "summary", "content", "story", "documentation"]
-    },
-    {
-      "slug": "visuals-design",
-      "label": "Visuals & design",
-      "keywords": ["image", "design", "figma", "diagram", "svg", "video", "ui", "illustration", "slides", "presentation", "canvas", "3d", "screenshot", "art", "logo"]
-    },
-    {
-      "slug": "automation",
-      "label": "Automation",
-      "keywords": ["automation", "automate", "workflow", "agent", "orchestration", "integration", "zapier", "n8n", "browser automation", "playwright", "scheduler", "cron", "pipeline", "deploy", "ci/cd", "hooks"]
-    },
-    {
-      "slug": "testing",
-      "label": "Testing",
-      "keywords": ["testing", "unit test", "tests", "qa", "e2e", "tdd", "pytest", "jest", "benchmark", "fuzz", "code review", "linting"]
-    },
-    {
-      "slug": "discovery",
-      "label": "Discovery",
-      "keywords": ["awesome list", "awesome", "curated", "directory", "collection", "marketplace", "catalog", "registry", "list of"]
-    }
+    {"slug": "coding", "label": "Coding", "keywords": ["code", "coding", "programming", "refactor", "debug", "git", "pull request", "typescript", "python", "javascript", "rust", "compiler", "lint", "ide", "repository", "sdk"]},
+    {"slug": "documents-files", "label": "Documents & files", "keywords": ["pdf", "docx", "document", "file system", "filesystem", "files", "excel", "xlsx", "spreadsheet", "pptx", "powerpoint", "word", "google drive", "ocr", "csv", "markdown"]},
+    {"slug": "research", "label": "Research", "keywords": ["research", "web search", "search engine", "arxiv", "paper", "literature", "wikipedia", "browse", "crawl", "scrape", "fact check", "knowledge base", "rag"]},
+    {"slug": "data-analysis", "label": "Data analysis", "keywords": ["data analysis", "analytics", "sql", "database", "postgres", "bigquery", "snowflake", "pandas", "chart", "dashboard", "statistics", "visualization", "metrics", "dataset"]},
+    {"slug": "writing", "label": "Writing", "keywords": ["writing", "copywriting", "blog", "article", "email", "proofread", "translate", "translation", "summarize", "summary", "content", "story", "documentation"]},
+    {"slug": "visuals-design", "label": "Visuals & design", "keywords": ["image", "design", "figma", "diagram", "svg", "video", "ui", "illustration", "slides", "presentation", "canvas", "3d", "screenshot", "art", "logo"]},
+    {"slug": "automation", "label": "Automation", "keywords": ["automation", "automate", "workflow", "agent", "orchestration", "integration", "zapier", "n8n", "browser automation", "playwright", "scheduler", "cron", "pipeline", "deploy", "ci/cd", "hooks"]},
+    {"slug": "testing", "label": "Testing", "keywords": ["testing", "unit test", "tests", "qa", "e2e", "tdd", "pytest", "jest", "benchmark", "fuzz", "code review", "linting"]},
+    {"slug": "discovery", "label": "Discovery", "keywords": ["awesome list", "awesome", "curated", "directory", "collection", "marketplace", "catalog", "registry", "list of"]}
   ]
 }

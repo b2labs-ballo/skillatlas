@@ -38,6 +38,13 @@ function Chips({ name, options, value, onPick }: { name: string; options: Option
   );
 }
 
+/** Options that share a group are shown together under a heading. */
+function groupsOf(options: Option[]): [string, Option[]][] {
+  const groups = new Map<string, Option[]>();
+  for (const o of options) groups.set(o.group ?? "", [...(groups.get(o.group ?? "") ?? []), o]);
+  return [...groups];
+}
+
 function Select({ id, text, options, value, all, onPick }: { id: string; text: string; options: Option[]; value: string; all?: string; onPick: (v: string) => void }) {
   return (
     <label htmlFor={id} className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
@@ -49,11 +56,20 @@ function Select({ id, text, options, value, all, onPick }: { id: string; text: s
         className="h-11 w-full rounded-xl border border-transparent bg-chip px-4 text-[15px] font-medium normal-case tracking-normal text-ink hover:bg-chip-hover"
       >
         {all && <option value="">{all}</option>}
-        {options.map((o) => (
-          <option key={o.slug} value={o.slug}>
-            {o.label}
-          </option>
-        ))}
+        {groupsOf(options).map(([group, items]) => {
+          const list = items.map((o) => (
+            <option key={o.slug} value={o.slug}>
+              {o.label}
+            </option>
+          ));
+          return group ? (
+            <optgroup key={group} label={group}>
+              {list}
+            </optgroup>
+          ) : (
+            list
+          );
+        })}
       </select>
     </label>
   );
@@ -103,7 +119,7 @@ export function Filters({ initial }: { initial: FilterState }) {
           aria-label="Search the directory"
           autoComplete="off"
           enterKeyHint="search"
-          className="h-12 w-full rounded-full border border-line bg-surface pl-14 pr-12 text-base text-ink placeholder:text-muted focus:border-accent focus:outline-none"
+          className="h-12 w-full rounded-full tile border-line pl-14 pr-12 text-base text-ink placeholder:text-muted focus:border-accent focus:outline-none"
         />
         {pending && (
           <span role="status" aria-label="Loading results" className="absolute right-5 top-1/2 size-4 -translate-y-1/2 animate-spin rounded-full border-2 border-line border-t-accent" />

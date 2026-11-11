@@ -1,10 +1,10 @@
 import data from "./categories.json";
 
-export type Option = { slug: string; label: string };
+export type Option = { slug: string; label: string; group?: string };
 
 export const PLATFORMS: Option[] = data.platforms;
 export const TYPES: Option[] = data.types;
-export const PROFESSIONS: Option[] = data.professions.map(({ slug, label }) => ({ slug, label }));
+export const PROFESSIONS: Option[] = data.professions.map(({ slug, label, group }) => ({ slug, label, group }));
 export const TASKS: Option[] = data.tasks.map(({ slug, label }) => ({ slug, label }));
 
 export const SORTS: Option[] = [

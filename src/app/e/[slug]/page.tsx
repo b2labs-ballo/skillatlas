@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps<"/e/[slug]">): Prom
 }
 
 const external = { target: "_blank", rel: "noopener noreferrer nofollow" } as const;
-const card = "rounded-2xl bg-surface p-5 sm:p-8";
+const card = "tile rounded-2xl p-5 sm:p-8";
 const button = "inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-semibold";
 const secondary = `${button} bg-chip hover:bg-chip-hover`;
 
