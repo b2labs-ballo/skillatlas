@@ -17,9 +17,9 @@ export async function generateMetadata({ params }: PageProps<"/e/[slug]">): Prom
 }
 
 const external = { target: "_blank", rel: "noopener noreferrer nofollow" } as const;
-const card = "rounded-3xl border border-line bg-surface p-5 shadow-card sm:p-8";
+const card = "rounded-2xl bg-surface p-5 sm:p-8";
 const button = "inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-semibold";
-const secondary = `${button} border border-line bg-surface shadow-card hover:border-accent hover:text-accent`;
+const secondary = `${button} bg-chip hover:bg-chip-hover`;
 
 const WHAT_IT_IS: Record<string, string> = {
   skill: "A skill is a set of instructions and files that teaches the AI how to do one kind of task well.",
@@ -47,7 +47,7 @@ function Icon({ d }: { d: string }) {
 
 function Fact({ name, children }: { name: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl bg-accent-soft/60 px-4 py-3">
+    <div className="rounded-xl bg-chip px-4 py-3">
       <dt className="text-xs font-semibold uppercase tracking-wide text-muted">{name}</dt>
       <dd className="mt-0.5 truncate text-base font-bold">{children}</dd>
     </div>
@@ -61,7 +61,7 @@ function Chips({ title, items, param }: { title: string; items: string[]; param:
       <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">{title}</h3>
       <div className="mt-2 flex flex-wrap gap-2">
         {items.map((s) => (
-          <Link key={s} href={`/?${param}=${s}`} className="rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm font-semibold hover:border-accent hover:text-accent">
+          <Link key={s} href={`/?${param}=${s}`} className="rounded-lg bg-chip px-3.5 py-1.5 text-sm font-medium hover:bg-chip-hover">
             {label(s)}
           </Link>
         ))}
@@ -98,7 +98,7 @@ async function Related({ entry }: { entry: Entry }) {
       <h2 id="related" className="text-2xl font-extrabold tracking-tight">
         More like this
       </h2>
-      <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+      <ul className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {related.map((e) => (
           <li key={e.slug}>
             <EntryCard entry={e} />
@@ -119,7 +119,7 @@ async function EntryDetail({ params }: Pick<PageProps<"/e/[slug]">, "params">) {
   const sourceList = entry.found_via.find((v) => v.startsWith("list:") && v !== "list:self")?.slice(5);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <Link href="/" className="self-start text-sm font-semibold text-accent hover:underline">
         ← Back to the directory
       </Link>
@@ -141,7 +141,7 @@ async function EntryDetail({ params }: Pick<PageProps<"/e/[slug]">, "params">) {
               )}
             </p>
           </div>
-          <FavoriteButton slug={entry.slug} name={entry.name} className="border border-line" />
+          <FavoriteButton slug={entry.slug} name={entry.name} className="bg-chip" />
         </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-2.5">
@@ -163,7 +163,7 @@ async function EntryDetail({ params }: Pick<PageProps<"/e/[slug]">, "params">) {
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           {entry.github_url && (
-            <a href={entry.github_url} {...external} className={`${button} btn-primary shadow-card`}>
+            <a href={entry.github_url} {...external} className={`${button} btn-primary`}>
               <Icon d="M14 5h5v5M19 5l-8 8M11 7H6v11h11v-5" />
               Open on GitHub
             </a>
@@ -175,7 +175,7 @@ async function EntryDetail({ params }: Pick<PageProps<"/e/[slug]">, "params">) {
             </a>
           )}
           {original && (
-            <a href={original} {...external} className={`${button} btn-primary shadow-card`}>
+            <a href={original} {...external} className={`${button} btn-primary`}>
               <Icon d="M14 5h5v5M19 5l-8 8M11 7H6v11h11v-5" />
               Open on {sourceName}
             </a>
@@ -202,8 +202,8 @@ async function EntryDetail({ params }: Pick<PageProps<"/e/[slug]">, "params">) {
             How to install
           </h2>
           <p className="mt-2 text-[15px] text-muted">Copy this command to install. Full setup and usage instructions are in the creator&apos;s description below.</p>
-          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#231a3a] p-3 pl-5">
-            <code className="no-scrollbar min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-sm text-[#f1ecff]">{entry.install_command}</code>
+          <div className="mt-4 flex items-center gap-3 rounded-xl border border-line bg-black p-3 pl-5">
+            <code className="no-scrollbar min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-sm text-[#f1f1f1]">{entry.install_command}</code>
             <CopyButton text={entry.install_command} />
           </div>
         </section>

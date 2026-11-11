@@ -17,7 +17,7 @@ function toUrl(state: FilterState) {
 
 function Chips({ name, options, value, onPick }: { name: string; options: Option[]; value: string; onPick: (v: string) => void }) {
   return (
-    <div role="group" aria-label={name} className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 py-0.5 sm:mx-0 sm:flex-wrap sm:px-0">
+    <div role="group" aria-label={name} className="no-scrollbar -mx-5 flex gap-2.5 overflow-x-auto px-5 py-0.5 sm:mx-0 sm:flex-wrap sm:justify-center sm:px-0">
       {[{ slug: "", label: `All ${name.toLowerCase()}s` }, ...options].map((o) => {
         const active = value === o.slug;
         return (
@@ -26,8 +26,8 @@ function Chips({ name, options, value, onPick }: { name: string; options: Option
             type="button"
             aria-pressed={active}
             onClick={() => onPick(o.slug)}
-            className={`h-11 shrink-0 rounded-full border px-5 text-sm font-semibold transition-colors ${
-              active ? "btn-primary border-transparent shadow-card" : "border-line bg-surface text-muted hover:border-accent hover:text-accent"
+            className={`h-10 shrink-0 rounded-lg px-3.5 text-sm font-medium transition-colors sm:h-9 ${
+              active ? "bg-ink text-bg" : "bg-chip text-ink hover:bg-chip-hover"
             }`}
           >
             {o.label}
@@ -46,7 +46,7 @@ function Select({ id, text, options, value, all, onPick }: { id: string; text: s
         id={id}
         value={value}
         onChange={(e) => onPick(e.target.value)}
-        className="h-12 w-full rounded-2xl border border-line bg-surface px-4 text-[15px] font-medium normal-case tracking-normal text-ink shadow-card"
+        className="h-11 w-full rounded-xl border border-transparent bg-chip px-4 text-[15px] font-medium normal-case tracking-normal text-ink hover:bg-chip-hover"
       >
         {all && <option value="">{all}</option>}
         {options.map((o) => (
@@ -81,16 +81,16 @@ export function Filters({ initial }: { initial: FilterState }) {
   };
 
   return (
-    <section aria-label="Search and filters" className="flex flex-col gap-4">
+    <section aria-label="Search and filters" className="flex flex-col gap-3.5">
       <form
         role="search"
         onSubmit={(e) => {
           e.preventDefault();
           go(state);
         }}
-        className="relative"
+        className="relative mx-auto w-full max-w-2xl"
       >
-        <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-accent" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
+        <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden>
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" />
         </svg>
@@ -103,7 +103,7 @@ export function Filters({ initial }: { initial: FilterState }) {
           aria-label="Search the directory"
           autoComplete="off"
           enterKeyHint="search"
-          className="h-14 w-full rounded-full border border-line bg-surface pl-14 pr-12 text-base font-medium text-ink shadow-card placeholder:font-normal placeholder:text-muted"
+          className="h-12 w-full rounded-full border border-line bg-surface pl-14 pr-12 text-base text-ink placeholder:text-muted focus:border-accent focus:outline-none"
         />
         {pending && (
           <span role="status" aria-label="Loading results" className="absolute right-5 top-1/2 size-4 -translate-y-1/2 animate-spin rounded-full border-2 border-line border-t-accent" />
@@ -113,7 +113,7 @@ export function Filters({ initial }: { initial: FilterState }) {
       <Chips name="Platform" options={PLATFORMS} value={state.platform} onPick={(v) => go({ ...state, platform: v })} />
       <Chips name="Type" options={TYPES} value={state.type} onPick={(v) => go({ ...state, type: v })} />
 
-      <div className="grid grid-cols-2 gap-3 pt-1 sm:grid-cols-3 sm:gap-4">
+      <div className="mx-auto grid w-full max-w-3xl grid-cols-2 gap-3 pt-1 sm:grid-cols-3 sm:gap-4">
         <Select id="profession" text="Profession" options={PROFESSIONS} value={state.profession} all="Any profession" onPick={(v) => go({ ...state, profession: v })} />
         <Select id="task" text="Task" options={TASKS} value={state.task} all="Any task" onPick={(v) => go({ ...state, task: v })} />
         <div className="col-span-2 sm:col-span-1">

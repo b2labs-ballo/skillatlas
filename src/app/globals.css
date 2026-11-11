@@ -1,61 +1,75 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* Dark mode is switched by a "dark" class on <html>. The site is light by
-   default; visitors can switch with the button in the header. */
+/* The site is dark by default (class "dark" on <html>). Visitors can switch
+   to the light version with the button in the header. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-heading), var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --color-bg: var(--bg);
   --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-chip: var(--chip);
+  --color-chip-hover: var(--chip-hover);
   --color-line: var(--line);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-on-accent: var(--on-accent);
-  --shadow-card: 0 1px 2px rgb(60 30 120 / 0.04), 0 8px 24px -12px rgb(60 30 120 / 0.18);
-  --shadow-card-hover: 0 2px 4px rgb(60 30 120 / 0.06), 0 18px 36px -14px rgb(109 59 245 / 0.35);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.08), 0 6px 18px -10px rgb(0 0 0 / 0.25);
+  --shadow-card-hover: 0 2px 4px rgb(0 0 0 / 0.1), 0 14px 30px -14px rgb(0 0 0 / 0.4);
 }
 
+/* Light version */
 :root {
-  --bg: #fbf8ff;
+  --bg: #f9f9f9;
   --surface: #ffffff;
-  --line: #ebe4f7;
-  --ink: #231a3a;
-  --muted: #655c7c;
-  --accent: #6d3bf5;
-  --accent-soft: #efe8ff;
+  --surface-hover: #f2f2f2;
+  --chip: #ececec;
+  --chip-hover: #dedede;
+  --line: #e2e2e2;
+  --ink: #0f0f0f;
+  --muted: #606060;
+  --accent: #e0241b;
+  --accent-soft: #fde8e6;
   --on-accent: #ffffff;
-  --glow-a: rgb(167 139 250 / 0.28);
-  --glow-b: rgb(255 138 101 / 0.22);
+  --glow: rgb(255 61 46 / 0.1);
   color-scheme: light;
 }
 
+/* Dark version (default) */
 .dark {
-  --bg: #1d1833;
-  --surface: #2a2347;
-  --line: #40376a;
-  --ink: #f6f3ff;
-  --muted: #bab2d6;
-  --accent: #b79dff;
-  --accent-soft: #3b3169;
-  --on-accent: #1d1833;
-  --glow-a: rgb(139 92 246 / 0.3);
-  --glow-b: rgb(255 122 89 / 0.14);
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface-hover: #262626;
+  --chip: #272727;
+  --chip-hover: #3a3a3a;
+  --line: #303030;
+  --ink: #f1f1f1;
+  --muted: #aaaaaa;
+  --accent: #ff4e45;
+  --accent-soft: #3a1512;
+  --on-accent: #ffffff;
+  --glow: rgb(255 61 46 / 0.16);
   color-scheme: dark;
 }
 
 body {
   color: var(--ink);
   background-color: var(--bg);
-  /* Two soft colour glows at the top of every page. */
-  background-image:
-    radial-gradient(60rem 28rem at 12% -8rem, var(--glow-a), transparent 70%),
-    radial-gradient(48rem 24rem at 92% -6rem, var(--glow-b), transparent 70%);
+  /* One soft red glow behind the page title. */
+  background-image: radial-gradient(46rem 22rem at 50% -7rem, var(--glow), transparent 70%);
   background-repeat: no-repeat;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
 }
 
 :focus-visible {
@@ -70,21 +84,18 @@ body {
   display: none;
 }
 
-/* Primary button: violet to coral. */
+/* Primary button */
 .btn-primary {
-  background-image: linear-gradient(100deg, #6d3bf5, #c03bf0 55%, #ff6a4d);
+  background-image: linear-gradient(100deg, #ff2d2d, #ff5a1f);
   color: #ffffff;
 }
 .btn-primary:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.1);
 }
 
 .text-gradient {
-  background-image: linear-gradient(100deg, #6d3bf5, #d53fe0 50%, #ff6a4d);
+  background-image: linear-gradient(100deg, #ff2d2d, #ff7a1a 60%, #ffb020);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-}
-.dark .text-gradient {
-  background-image: linear-gradient(100deg, #b79dff, #f08cf5 50%, #ff9a80);
 }

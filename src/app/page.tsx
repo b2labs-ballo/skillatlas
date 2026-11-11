@@ -54,15 +54,15 @@ async function Directory({ searchParams }: Pick<PageProps<"/">, "searchParams">)
       </div>
 
       {failed ? (
-        <p className="rounded-3xl border border-line bg-surface p-8 text-center text-muted shadow-card">
+        <p className="rounded-3xl bg-surface p-8 text-center text-muted">
           The directory could not be loaded right now. Please try again in a moment.
         </p>
       ) : entries.length === 0 ? (
-        <p className="rounded-3xl border border-line bg-surface p-8 text-center text-muted shadow-card">
+        <p className="rounded-3xl bg-surface p-8 text-center text-muted">
           Nothing matches yet. Try a shorter search or remove a filter.
         </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {entries.map((e) => (
             <li key={e.slug}>
               <EntryCard entry={e} />
@@ -74,14 +74,14 @@ async function Directory({ searchParams }: Pick<PageProps<"/">, "searchParams">)
       {!failed && pages > 1 && (
         <nav aria-label="Pages" className="flex items-center justify-center gap-3 pt-6">
           {page > 1 ? (
-            <Link href={pageUrl(page - 1)} className="inline-flex h-12 items-center rounded-full border border-line bg-surface px-6 text-sm font-semibold shadow-card hover:border-accent hover:text-accent">
+            <Link href={pageUrl(page - 1)} className="inline-flex h-11 items-center rounded-full bg-chip px-6 text-sm font-semibold hover:bg-chip-hover">
               ← Previous
             </Link>
           ) : (
             <span className="inline-flex h-12 items-center rounded-full border border-line px-6 text-sm font-semibold text-muted opacity-50">← Previous</span>
           )}
           {page < pages ? (
-            <Link href={pageUrl(page + 1)} className="btn-primary inline-flex h-12 items-center rounded-full px-7 text-sm font-semibold shadow-card">
+            <Link href={pageUrl(page + 1)} className="btn-primary inline-flex h-11 items-center rounded-full px-7 text-sm font-semibold">
               Next →
             </Link>
           ) : (
@@ -99,7 +99,7 @@ function DirectorySkeleton() {
     <div className="flex flex-col gap-4" role="status" aria-label="Loading the directory">
       <div className="h-14 animate-pulse rounded-full bg-line/60" />
       <div className="h-10 w-2/3 animate-pulse rounded-full bg-line/60" />
-      <div className="grid grid-cols-1 gap-4 pt-6 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 6 }, (_, i) => (
           <div key={i} className="h-48 animate-pulse rounded-3xl bg-line/60" />
         ))}
@@ -111,8 +111,8 @@ function DirectorySkeleton() {
 export default function Home({ searchParams }: PageProps<"/">) {
   return (
     <div className="flex flex-col gap-6">
-      <div className="max-w-3xl">
-        <h1 className="text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl">
+      <div className="mx-auto max-w-3xl text-center">
+        <h1 className="text-[2.6rem] font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
           Find the right <span className="text-gradient">skill</span> for the job
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted sm:text-lg">

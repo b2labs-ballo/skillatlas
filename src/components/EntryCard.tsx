@@ -9,9 +9,9 @@ export function Avatar({ entry, size }: { entry: Pick<EntryCardData, "author_ava
   const style = { width: size, height: size };
   return entry.author_avatar ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={entry.author_avatar.includes("avatars.githubusercontent.com") ? `${entry.author_avatar}&s=${size * 2}` : entry.author_avatar} alt="" width={size} height={size} loading="lazy" style={style} className="shrink-0 rounded-2xl bg-line object-cover" />
+    <img src={entry.author_avatar.includes("avatars.githubusercontent.com") ? `${entry.author_avatar}&s=${size * 2}` : entry.author_avatar} alt="" width={size} height={size} loading="lazy" style={style} className="shrink-0 rounded-full bg-line object-cover" />
   ) : (
-    <div style={style} className={`grid shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-lg font-bold text-white ${typeStyle(entry.type).tile}`} aria-hidden>
+    <div style={style} className={`grid shrink-0 place-items-center rounded-full bg-gradient-to-br text-lg font-bold text-white ${typeStyle(entry.type).tile}`} aria-hidden>
       {entry.name.charAt(0).toUpperCase()}
     </div>
   );
@@ -29,13 +29,13 @@ export function TypeBadge({ type }: { type: string }) {
 
 export function EntryCard({ entry }: { entry: EntryCardData }) {
   return (
-    <article className="relative flex h-full flex-col gap-4 rounded-3xl border border-line bg-surface p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-accent hover:shadow-card-hover">
+    <article className="relative flex h-full flex-col gap-3.5 rounded-2xl bg-surface p-5 transition-colors duration-200 hover:bg-surface-hover">
       <div className="flex items-center gap-3.5 pr-9">
-        <Avatar entry={entry} size={48} />
+        <Avatar entry={entry} size={44} />
         <div className="min-w-0">
-          <h2 className="truncate text-lg font-bold leading-snug">
+          <h2 className="truncate font-sans text-[17px] font-semibold leading-snug">
             {/* The stretched link makes the whole card clickable. */}
-            <Link href={`/e/${entry.slug}`} className="after:absolute after:inset-0 after:rounded-3xl">
+            <Link href={`/e/${entry.slug}`} className="after:absolute after:inset-0 after:rounded-2xl">
               {entry.name}
             </Link>
           </h2>
