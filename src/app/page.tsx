@@ -116,8 +116,8 @@ export default function Home({ searchParams }: PageProps<"/">) {
           Find the right <span className="text-gradient">skill</span> for the job
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted sm:text-lg">
-          Community-made skills, plugins, MCP servers and custom GPTs for Claude and ChatGPT — each one credited and linked
-          to its creator.
+          Skills, plugins, MCP servers, coding agents, prompts, local apps and models for Claude, ChatGPT and other AI
+          tools — each one credited and linked to its creator.
         </p>
       </div>
       <Suspense fallback={<DirectorySkeleton />}>
