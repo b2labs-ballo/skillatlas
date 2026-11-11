@@ -21,3 +21,6 @@ export const label = (slug: string) => SHORT[slug] ?? labels.get(slug) ?? slug;
 
 export const isValid = (list: Option[], value: string | undefined): value is string =>
   !!value && list.some((o) => o.slug === value);
+
+/** Full label, used where there is room (detail page). */
+export const fullLabel = (slug: string) => labels.get(slug) ?? slug;

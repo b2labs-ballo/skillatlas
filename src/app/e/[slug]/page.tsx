@@ -6,7 +6,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { Avatar, EntryCard, TypeBadge } from "@/components/EntryCard";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { Readme } from "@/components/Readme";
-import { label } from "@/lib/categories";
+import { fullLabel, label } from "@/lib/categories";
 import { type Entry, getEntry, getReadme, getRelated } from "@/lib/db";
 import { formatDate, formatStars } from "@/lib/format";
 
@@ -146,7 +146,7 @@ async function EntryDetail({ params }: Pick<PageProps<"/e/[slug]">, "params">) {
 
         <div className="mt-5 flex flex-wrap items-center gap-2.5">
           <TypeBadge type={entry.type} />
-          {entry.platforms.length > 0 && <span className="text-sm font-semibold text-muted">Works with {entry.platforms.map(label).join(", ")}</span>}
+          {entry.platforms.length > 0 && <span className="text-sm font-semibold text-muted">Works with {entry.platforms.map(fullLabel).join(", ")}</span>}
         </div>
 
         <p className="mt-5 text-lg leading-relaxed">{entry.description || "No short description provided by the author."}</p>
