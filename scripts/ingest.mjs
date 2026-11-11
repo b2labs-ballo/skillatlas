@@ -7,10 +7,14 @@
 //   node scripts/ingest.mjs --dry      saves to data/dry-run.json instead of the database
 //   node scripts/ingest.mjs --quick    small sample (used automatically without a token)
 //   node scripts/ingest.mjs --limit 50 process at most 50 repositories
+//   node scripts/ingest.mjs --sources extra,registry,npm,openvsx,hf   only some source groups
+//     groups: core (skills, plugins, MCP, GPT lists/topics/code search), extra (local apps,
+//     coding agents, prompts, Claude Code add-ons), registry, npm, openvsx, hf
 
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { createGitHub, pool, RateLimitError } from "./lib/github.mjs";
 import { categorize, decidePlatforms, decideType, extractInstallCommand, suspiciousReason } from "./lib/classify.mjs";
+import { discoverHuggingFace, discoverMcpRegistry, discoverNpm, discoverOpenVsx } from "./lib/other-sources.mjs";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
@@ -18,13 +22,14 @@ const args = process.argv.slice(2);
 const flag = (name) => args.includes(`--${name}`);
 const option = (name) => (args.includes(`--${name}`) ? args[args.indexOf(`--${name}`) + 1] : undefined);
 
-const TOKEN = process.env.GITHUB_TOKEN || process.env.GH_INGEST_TOKEN || "";
+const TOKEN = flag("no-token") ? "" : process.env.GITHUB_TOKEN || process.env.GH_INGEST_TOKEN || "";
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const DRY = flag("dry") || !SUPABASE_URL || !SUPABASE_KEY;
 const QUICK = flag("quick") || !TOKEN;
 const LIMIT = Number(option("limit") || (QUICK ? 25 : 0));
 const README_MAX = Number(process.env.README_MAX_CHARS || 20000);
+const SOURCES = new Set((option("sources") || "core,extra,registry,npm,openvsx,hf").split(","));
 
 const log = (...a) => console.log(...a);
 const gh = createGitHub({ token: TOKEN, log });
@@ -39,6 +44,18 @@ const TOPICS = [
   ["chatgpt-apps", "chatgpt-app"], ["chatgpt-app", "chatgpt-app"], ["apps-sdk", "chatgpt-app"],
   ["custom-gpt", "gpt"], ["custom-gpts", "gpt"], ["gpts", "gpt"],
   ["claude-code", "claude-code"],
+];
+
+// More kinds of AI helpers. The number is a minimum star count: these topics are
+// broad, so we only take projects that people have actually starred.
+const EXTRA_TOPICS = [
+  ["claude-code-subagents", "addon", 0], ["claude-code-agents", "addon", 0], ["claude-code-hooks", "addon", 0],
+  ["claude-code-commands", "addon", 0], ["subagents", "addon", 20], ["slash-commands", "addon", 20],
+  ["cursorrules", "prompt", 5], ["cursor-rules", "prompt", 5], ["claude-md", "prompt", 5], ["agents-md", "prompt", 5],
+  ["prompt-library", "prompt", 20], ["awesome-prompts", "prompt", 20], ["chatgpt-prompts", "prompt", 50], ["prompts", "prompt", 200],
+  ["coding-agent", "agent", 50], ["ai-coding-agent", "agent", 20], ["ai-coding-assistant", "agent", 50], ["coding-assistant", "agent", 100],
+  ["local-llm", "local-app", 50], ["local-ai", "local-app", 50], ["self-hosted-ai", "local-app", 20],
+  ["ollama-gui", "local-app", 5], ["ollama-webui", "local-app", 5], ["ollama", "local-app", 300],
 ];
 
 // Extra name searches for skills/plugins that have no topic set.
@@ -70,6 +87,22 @@ const LISTS = [
   ["rdmgator12/awesome-chatgpt-apps", "chatgpt-app"],
   ["ai-boost/Awesome-GPTs", "gpt"],
   ["taranjeet/awesome-gpts", "gpt"],
+];
+
+// More curated lists. "false" at the end means the repository is a product itself, not a list.
+const EXTRA_LISTS = [
+  ["hesreallyhim/awesome-claude-code", "addon"],
+  ["VoltAgent/awesome-claude-code-subagents", "addon"],
+  ["punkpeye/awesome-mcp-servers", "mcp"],
+  ["modelcontextprotocol/servers", "mcp"],
+  ["PatrickJS/awesome-cursorrules", "prompt"],
+  ["f/awesome-chatgpt-prompts", "prompt"],
+  ["langgptai/awesome-claude-prompts", "prompt"],
+  ["e2b-dev/awesome-ai-agents", "agent"],
+  ["sourcegraph/awesome-code-ai", "agent"],
+  ["janhq/awesome-local-ai", "local-app"],
+  ["vince-lam/awesome-local-llms", "local-app"],
+  ["ollama/ollama", "local-app", false],
 ];
 
 const STAR_SHARDS = [">=1000", "200..999", "50..199", "20..49", "10..19", "5..9", "3..4", "2", "1", "0"];
@@ -146,13 +179,22 @@ async function searchReposSharded(q, onRepo) {
 }
 
 async function discoverByTopicsAndNames(afterEach) {
-  const searches = [
-    ...TOPICS.map(([t, hint]) => [`topic:${t} archived:false`, hint, `topic:${t}`]),
-    ...NAME_SEARCHES.map(([q, hint]) => [`${q} archived:false`, hint, `search:${q.split(" ")[0]}`]),
-  ];
-  for (const [q, hint, via] of QUICK ? searches.filter((_, i) => [0, 4, 8, 11, 14].includes(i)) : searches) {
+  let searches = [];
+  if (SOURCES.has("core")) {
+    searches.push(...TOPICS.map(([t, hint]) => [`topic:${t} archived:false`, hint, `topic:${t}`, true]));
+    searches.push(...NAME_SEARCHES.map(([q, hint]) => [`${q} archived:false`, hint, `search:${q.split(" ")[0]}`, true]));
+  }
+  if (SOURCES.has("extra")) {
+    // With a star minimum we simply take the top results (at most 1000).
+    searches.push(...EXTRA_TOPICS.map(([t, hint, min]) => [`topic:${t} archived:false${min ? ` stars:>=${min}` : ""}`, hint, `topic:${t}`, !min]));
+  }
+  if (QUICK) {
+    const seenHints = new Set(); // quick sample: one search per kind
+    searches = searches.filter(([, hint]) => !seenHints.has(hint) && seenHints.add(hint));
+  }
+  for (const [q, hint, via, sharded] of searches) {
     const before = candidates.size;
-    const total = await searchReposSharded(q, (repo) => {
+    const total = await (sharded ? searchReposSharded : searchRepoPages)(q, (repo) => {
       const c = candidate(repo.full_name);
       if (!c.done) c.repo = slim(repo);
       c.ev.hints.add(hint);
@@ -233,15 +275,20 @@ function parseGptLinks(readme, listName) {
         install_command: null,
         ...categorize(base),
         found_via: [`list:${listName}`],
+        source: "list",
+        source_url: `https://github.com/${listName}`,
+        downloads: null,
       });
     }
   }
 }
 
 async function discoverFromLists() {
-  for (const [listName, hint] of QUICK ? LISTS.filter((_, i) => [0, 3, 11].includes(i)) : LISTS) {
+  const core = SOURCES.has("core") ? (QUICK ? LISTS.filter((_, i) => [0, 3, 11].includes(i)) : LISTS) : [];
+  const extra = SOURCES.has("extra") ? (QUICK ? EXTRA_LISTS.filter((_, i) => [0, 11].includes(i)) : EXTRA_LISTS) : [];
+  for (const [listName, hint, selfIsList = true] of [...core, ...extra]) {
     const self = candidate(listName);
-    self.ev.hints.add("list");
+    self.ev.hints.add(selfIsList ? "list" : hint);
     self.foundVia.add("list:self");
     const readme = await gh.get(`/repos/${listName}/readme`, { raw: true });
     if (!readme) {
@@ -337,16 +384,19 @@ async function buildEntry(c, existing) {
     platforms: decidePlatforms({ ...base, type }),
     type,
     github_url: repo.html_url,
-    homepage_url: homepage,
+    homepage_url: homepage ?? c.altUrl ?? null,
     stars: repo.stargazers_count,
     last_updated: repo.pushed_at,
     license: repo.license?.spdx_id && repo.license.spdx_id !== "NOASSERTION" ? repo.license.spdx_id : null,
     topics,
     readme: readme.slice(0, README_MAX) || null,
     default_branch: repo.default_branch,
-    install_command: extractInstallCommand(readme, { type, fullName: repo.full_name, ev: c.ev }),
+    install_command: extractInstallCommand(readme, { type, fullName: repo.full_name, ev: c.ev }) ?? c.installHint ?? null,
     ...categorize({ name: repo.name, description: repo.description, topics, readme, type }),
     found_via: [...c.foundVia].slice(0, 12),
+    source: "github",
+    source_url: repo.html_url,
+    downloads: c.downloads || null,
   };
 }
 
@@ -406,6 +456,15 @@ async function main() {
   const started = Date.now();
   let rateLimited = false;
 
+  if (!DRY) {
+    // The database must have the columns added by supabase/migration-002-more-types.sql.
+    try {
+      await db("entries?select=source,source_url,downloads&limit=1");
+    } catch {
+      log("The database is missing the newest columns. In Supabase > SQL Editor, run the file supabase/migration-002-more-types.sql, then start again.");
+      process.exit(1);
+    }
+  }
   const existing = await loadExisting();
   const seen = new Set();
   const output = [];
@@ -452,6 +511,14 @@ async function main() {
   }
 
   try {
+    const ctx = { candidate, log, QUICK, README_MAX };
+    log("0/4 Other catalogs");
+    if (SOURCES.has("registry")) await discoverMcpRegistry(ctx);
+    if (SOURCES.has("npm")) await discoverNpm(ctx);
+    if (SOURCES.has("openvsx")) (await discoverOpenVsx(ctx)).slice(0, LIMIT || undefined).forEach(keep);
+    if (SOURCES.has("hf")) (await discoverHuggingFace(ctx)).slice(0, LIMIT || undefined).forEach(keep);
+    await flush(true);
+
     log("1/4 Curated lists");
     await discoverFromLists();
     const usedSlugs = new Set();
@@ -467,7 +534,7 @@ async function main() {
     await discoverByTopicsAndNames(processNew);
 
     log("3/4 Code search");
-    await discoverByCodeSearch();
+    if (SOURCES.has("core")) await discoverByCodeSearch();
     await processNew();
 
     // Code search may prove that something saved earlier is really a skill/plugin/collection.

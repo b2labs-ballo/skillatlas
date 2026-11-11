@@ -40,9 +40,9 @@ export function categorize({ name, description, topics, readme, type }) {
   let professions = score(PROFESSIONS, strong, weak).filter((x) => x.s >= 3).slice(0, 3).map((x) => x.slug);
   let tasks = score(TASKS, strong, weak).filter((x) => x.s >= 3).slice(0, 3).map((x) => x.slug);
 
-  if (professions.length === 0) professions = [type === "mcp" || type === "plugin" ? "developers" : "everyone"];
+  if (professions.length === 0) professions = [["mcp", "plugin", "agent", "extension", "subagent"].includes(type) ? "developers" : "everyone"];
   if (type === "collection" && !tasks.includes("discovery")) tasks = ["discovery", ...tasks].slice(0, 3);
-  if (tasks.length === 0) tasks = [type === "plugin" ? "coding" : "automation"];
+  if (tasks.length === 0) tasks = [["plugin", "agent", "extension", "subagent"].includes(type) ? "coding" : type === "prompt" ? "writing" : "automation"];
   return { professions, tasks };
 }
 
@@ -82,17 +82,45 @@ export function decideType({ name, description, topics, ev }) {
   if (plugins === 1) return "plugin";
   if (skills > 1) return "collection";
   if (skills === 1) return "skill";
-  if (ev.hints.has("mcp") || ev.hints.has("chatgpt-app") || /\bmcp\b|model context protocol/.test(text)) return "mcp";
+  if (ev.hints.has("mcp") || ev.hints.has("chatgpt-app")) return "mcp";
   if (ev.hints.has("plugin")) return "plugin";
   if (ev.hints.has("skill")) return /skills\b.*(collection|library|pack)|collection of/.test(text) ? "collection" : "skill";
   if (ev.hints.has("gpt")) return "gpt";
+  if (ev.hints.has("extension")) return "extension";
+  if (ev.hints.has("addon")) return "subagent";
+  if (ev.hints.has("prompt")) return "prompt";
+  if (ev.hints.has("local-app")) return "local-app";
+  if (ev.hints.has("agent")) return "agent";
+  if (/\bmcp\b|model context protocol/.test(text)) return "mcp";
   // Only tagged "claude-code": keep it just when the text says what it is.
   if (/\bplugins?\b/.test(text)) return "plugin";
   if (/\bskills?\b/.test(text)) return "skill";
   return null;
 }
 
-export function decidePlatforms({ type, name, description, topics, ev }) {
+const EXTRA_PLATFORMS = [
+  ["gemini", /\bgemini\b/],
+  ["cursor", /\bcursor\b/],
+  ["copilot", /\bcopilot\b/],
+  ["local", /ollama|\blocal(ly)?\b|llama|self[- ]hosted|\boffline\b|lm[- ]?studio|gguf/],
+];
+
+export function decidePlatforms(input) {
+  const { type, name, description, topics } = input;
+  const text = `${name} ${description || ""} ${(topics || []).join(" ")}`.toLowerCase();
+  const claude = /claude|anthropic/.test(text);
+  const chatgpt = /chatgpt|openai|\bgpts?\b|codex/.test(text);
+  let out;
+  if (type === "model" || type === "local-app") out = ["local"];
+  else if (type === "subagent") out = ["claude"];
+  else if (type === "prompt") out = claude || chatgpt ? [claude && "claude", chatgpt && "chatgpt"].filter(Boolean) : ["chatgpt", "claude"];
+  else if (type === "agent" || type === "extension") out = [claude && "claude", chatgpt && "chatgpt"].filter(Boolean);
+  else out = decideMainPlatforms(input);
+  if (type !== "gpt") for (const [slug, re] of EXTRA_PLATFORMS) if (re.test(text) && !out.includes(slug)) out.push(slug);
+  return out.slice(0, 4);
+}
+
+function decideMainPlatforms({ type, name, description, topics, ev }) {
   const text = `${name} ${description || ""} ${(topics || []).join(" ")}`.toLowerCase();
   const mentionsChatgpt = /chatgpt|openai|\bgpts?\b|codex/.test(text) || ev.hints.has("chatgpt-app") || ev.hints.has("gpt");
   const mentionsClaude = /claude|anthropic/.test(text) || ev.hints.has("skill") || ev.hints.has("plugin") || ev.hints.has("claude-code");

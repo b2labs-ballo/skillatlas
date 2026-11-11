@@ -28,6 +28,36 @@ const STYLES: Record<string, Style> = {
     dot: "bg-pink-500",
     tile: "from-pink-500 to-amber-500",
   },
+  subagent: {
+    badge: "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-400/20 dark:text-fuchsia-200",
+    dot: "bg-fuchsia-500",
+    tile: "from-fuchsia-500 to-violet-500",
+  },
+  prompt: {
+    badge: "bg-amber-100 text-amber-800 dark:bg-amber-400/20 dark:text-amber-200",
+    dot: "bg-amber-500",
+    tile: "from-amber-500 to-orange-500",
+  },
+  agent: {
+    badge: "bg-indigo-100 text-indigo-800 dark:bg-indigo-400/20 dark:text-indigo-200",
+    dot: "bg-indigo-500",
+    tile: "from-indigo-500 to-violet-500",
+  },
+  "local-app": {
+    badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-400/20 dark:text-emerald-200",
+    dot: "bg-emerald-500",
+    tile: "from-emerald-500 to-teal-500",
+  },
+  extension: {
+    badge: "bg-cyan-100 text-cyan-800 dark:bg-cyan-400/20 dark:text-cyan-200",
+    dot: "bg-cyan-500",
+    tile: "from-cyan-500 to-sky-500",
+  },
+  model: {
+    badge: "bg-rose-100 text-rose-800 dark:bg-rose-400/20 dark:text-rose-200",
+    dot: "bg-rose-500",
+    tile: "from-rose-500 to-orange-400",
+  },
 };
 
 export const typeStyle = (type: string): Style => STYLES[type] ?? STYLES.skill;

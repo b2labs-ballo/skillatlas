@@ -9,7 +9,7 @@ export function Avatar({ entry, size }: { entry: Pick<EntryCardData, "author_ava
   const style = { width: size, height: size };
   return entry.author_avatar ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={`${entry.author_avatar}&s=${size * 2}`} alt="" width={size} height={size} loading="lazy" style={style} className="shrink-0 rounded-2xl bg-line object-cover" />
+    <img src={entry.author_avatar.includes("avatars.githubusercontent.com") ? `${entry.author_avatar}&s=${size * 2}` : entry.author_avatar} alt="" width={size} height={size} loading="lazy" style={style} className="shrink-0 rounded-2xl bg-line object-cover" />
   ) : (
     <div style={style} className={`grid shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-lg font-bold text-white ${typeStyle(entry.type).tile}`} aria-hidden>
       {entry.name.charAt(0).toUpperCase()}
@@ -52,8 +52,8 @@ export function EntryCard({ entry }: { entry: EntryCardData }) {
           <TypeBadge type={entry.type} />
           <span className="truncate text-xs font-medium text-muted">{entry.platforms.map(label).join(" · ")}</span>
         </div>
-        {entry.type !== "gpt" && (
-          <span className="flex shrink-0 items-center gap-1 text-sm font-semibold" title={`${entry.stars} GitHub stars`}>
+        {entry.stars > 0 && (
+          <span className="flex shrink-0 items-center gap-1 text-sm font-semibold" title={`${entry.stars} ${entry.type === "model" ? "likes" : "stars"}`}>
             <svg viewBox="0 0 24 24" className="size-4 text-amber-400" fill="currentColor" aria-hidden>
               <path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9 2.9-6Z" />
             </svg>

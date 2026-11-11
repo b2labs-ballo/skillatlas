@@ -18,6 +18,10 @@ export type Entry = EntryCardData & {
   default_branch: string | null;
   install_command: string | null;
   found_via: string[];
+  // Added by database update 002; missing on older rows.
+  source?: string | null;
+  source_url?: string | null;
+  downloads?: number | null;
 };
 
 export type ListParams = {

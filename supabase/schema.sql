@@ -12,7 +12,7 @@ create table if not exists public.entries (
   author_url      text,
   author_avatar   text,
   platforms       text[] not null default '{}',  -- claude, chatgpt
-  type            text not null check (type in ('skill','plugin','collection','mcp','gpt')),
+  type            text not null check (type in ('skill','plugin','collection','mcp','gpt','subagent','prompt','agent','local-app','extension','model')),
   github_url      text,
   homepage_url    text,                          -- creator's site (or the GPT link)
   stars           integer not null default 0,
@@ -25,6 +25,9 @@ create table if not exists public.entries (
   professions     text[] not null default '{}',
   tasks           text[] not null default '{}',
   found_via       text[] not null default '{}',  -- where we discovered it (topic, list, code search)
+  source          text not null default 'github', -- github, list, openvsx, huggingface
+  source_url      text,                           -- the original page we link to
+  downloads       bigint,                         -- downloads, where the source reports them
   status          text not null default 'published' check (status in ('published','hidden')),
   created_at      timestamptz not null default now(),
   ingested_at     timestamptz not null default now(),
