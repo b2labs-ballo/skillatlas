@@ -116,5 +116,6 @@ export async function getReadme(entry: Pick<Entry, "github_url" | "readme">): Pr
       /* GitHub unreachable: use our stored copy */
     }
   }
-  return { text: entry.readme, complete: (entry.readme?.length ?? 0) < 19_000 };
+  // GitHub entries store only the opening 1,000 characters; others up to 20,000.
+  return { text: entry.readme, complete: (entry.readme?.length ?? 0) < (repo ? 1000 : 19_000) };
 }

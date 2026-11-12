@@ -29,6 +29,10 @@ const DRY = flag("dry") || !SUPABASE_URL || !SUPABASE_KEY;
 const QUICK = flag("quick") || !TOKEN;
 const LIMIT = Number(option("limit") || (QUICK ? 25 : 0));
 const README_MAX = Number(process.env.README_MAX_CHARS || 20000);
+// GitHub entries keep only the opening of the README (enough for search and as
+// a fallback); the website shows the full, current README live from GitHub.
+// This keeps the database inside the free 500 MB.
+const README_KEEP_GITHUB = Number(process.env.README_KEEP_GITHUB || 1000);
 const SOURCES = new Set((option("sources") || "core,extra,registry,npm,openvsx,hf").split(","));
 
 const log = (...a) => console.log(...a);
@@ -389,7 +393,7 @@ async function buildEntry(c, existing) {
     last_updated: repo.pushed_at,
     license: repo.license?.spdx_id && repo.license.spdx_id !== "NOASSERTION" ? repo.license.spdx_id : null,
     topics,
-    readme: readme.slice(0, README_MAX) || null,
+    readme: readme.slice(0, README_KEEP_GITHUB) || null,
     default_branch: repo.default_branch,
     install_command: extractInstallCommand(readme, { type, fullName: repo.full_name, ev: c.ev }) ?? c.installHint ?? null,
     ...categorize({ name: repo.name, description: repo.description, topics, readme, type }),
