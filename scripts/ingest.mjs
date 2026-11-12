@@ -402,13 +402,29 @@ async function buildEntry(c, existing) {
 
 // ---------------------------------------------------------------- database
 
+// The free database is sometimes busy for a while (timeouts, 5xx). Those are
+// retried with growing pauses instead of stopping the whole run.
+const DB_RETRY_WAITS = [5, 20, 60, 180];
+
 async function db(path, init = {}) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    ...init,
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", ...(init.headers || {}) },
-  });
-  if (!res.ok) throw new Error(`Database error ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return res.status === 204 || res.headers.get("content-length") === "0" ? null : res.json().catch(() => null);
+  for (let attempt = 0; ; attempt++) {
+    let failure;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        ...init,
+        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json", ...(init.headers || {}) },
+      });
+      if (res.ok) return res.status === 204 || res.headers.get("content-length") === "0" ? null : res.json().catch(() => null);
+      failure = new Error(`Database error ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      if (res.status < 500 && res.status !== 429 && res.status !== 408) throw failure;
+    } catch (err) {
+      if (err === failure) throw err;
+      failure = failure || new Error(`Database not reachable: ${err.message}`);
+    }
+    if (attempt >= DB_RETRY_WAITS.length) throw failure;
+    log(`  database busy, trying again in ${DB_RETRY_WAITS[attempt]}s…`);
+    await new Promise((r) => setTimeout(r, DB_RETRY_WAITS[attempt] * 1000));
+  }
 }
 
 async function loadExisting() {
@@ -426,12 +442,14 @@ async function saveBatch(rows) {
   const full = rows.filter((r) => !r.partial).map((r) => ({ ...r, ingested_at: new Date().toISOString() }));
   const upsert = (list) =>
     db(`entries?on_conflict=source_key`, { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(list) });
-  if (full.length) {
+  // Small groups keep each write well under the database's time limit.
+  for (let i = 0; i < full.length; i += 10) {
+    const part = full.slice(i, i + 10);
     try {
-      await upsert(full);
+      await upsert(part);
     } catch {
       // One bad row must not lose the whole batch: save them one by one.
-      for (const row of full) {
+      for (const row of part) {
         await upsert([row]).catch((err) => log(`  could not save ${row.source_key}: ${err.message}`));
       }
     }
@@ -441,7 +459,7 @@ async function saveBatch(rows) {
       method: "PATCH",
       headers: { Prefer: "return=minimal" },
       body: JSON.stringify({ stars: r.stars, topics: r.topics, description: r.description, ingested_at: new Date().toISOString() }),
-    });
+    }).catch((err) => log(`  could not refresh ${r.source_key}: ${err.message}`));
   }
 }
 
