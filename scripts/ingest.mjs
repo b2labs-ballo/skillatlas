@@ -32,7 +32,8 @@ const README_MAX = Number(process.env.README_MAX_CHARS || 20000);
 // GitHub entries keep only the opening of the README (enough for search and as
 // a fallback); the website shows the full, current README live from GitHub.
 // This keeps the database inside the free 500 MB.
-const README_KEEP_GITHUB = Number(process.env.README_KEEP_GITHUB || 1000);
+const MCP_MIN_STARS = Number(process.env.MCP_MIN_STARS || 10);
+const README_KEEP_GITHUB =Number(process.env.README_KEEP_GITHUB || 1000);
 const SOURCES = new Set((option("sources") || "core,extra,registry,npm,openvsx,hf").split(","));
 
 const log = (...a) => console.log(...a);
@@ -199,6 +200,8 @@ async function discoverByTopicsAndNames(afterEach) {
   for (const [q, hint, via, sharded] of searches) {
     const before = candidates.size;
     const total = await (sharded ? searchReposSharded : searchRepoPages)(q, (repo) => {
+      // MCP servers with few stars are not listed, so don't even look at them.
+      if (hint === "mcp" && (repo.stargazers_count ?? 0) < MCP_MIN_STARS) return;
       const c = candidate(repo.full_name);
       if (!c.done) c.repo = slim(repo);
       c.ev.hints.add(hint);
@@ -360,6 +363,8 @@ async function buildEntry(c, existing) {
   const base = { name: repo.name, description: repo.description, topics, ev: c.ev };
   const type = decideType(base);
   if (!type) return skip("not a skill/plugin/MCP");
+  // There are tens of thousands of MCP servers; only the well-rated ones are listed.
+  if (type === "mcp" && repo.stargazers_count < MCP_MIN_STARS) return skip("MCP server with few stars");
   if (suspiciousReason({ ...base, readme: "", stars: repo.stargazers_count })) return skip("suspicious");
 
   // Unchanged since last run → keep the stored README, only refresh the numbers.

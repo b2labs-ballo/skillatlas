@@ -71,8 +71,17 @@ async function query<T>(path: string, headers: Record<string, string> = {}): Pro
 export async function listEntries(p: ListParams) {
   "use cache";
   cacheLife("minutes");
-  const { rows, total } = await query<EntryCardData>(`entries?${buildListQuery(p)}`, { Prefer: "count=exact" });
-  return { entries: rows, total: total ?? rows.length };
+  const path = `entries?${buildListQuery(p)}`;
+  try {
+    // "estimated" counts exactly for small result sets and estimates large ones, which stays fast.
+    const { rows, total } = await query<EntryCardData>(path, { Prefer: "count=estimated" });
+    return { entries: rows, total: total ?? rows.length, counted: true };
+  } catch {
+    // Counting took too long (busy database): show the results without a total.
+    const { rows } = await query<EntryCardData>(path);
+    const before = (Math.max(1, p.page ?? 1) - 1) * PAGE_SIZE;
+    return { entries: rows, total: before + rows.length + (rows.length === PAGE_SIZE ? 1 : 0), counted: false };
+  }
 }
 
 export async function getEntry(slug: string): Promise<Entry | null> {

@@ -21,8 +21,9 @@ async function Directory({ searchParams }: Pick<PageProps<"/">, "searchParams">)
   let entries: Awaited<ReturnType<typeof listEntries>>["entries"] = [];
   let total = 0;
   let failed = false;
+  let counted = true;
   try {
-    ({ entries, total } = await listEntries({ ...filters, page }));
+    ({ entries, total, counted } = await listEntries({ ...filters, page }));
   } catch {
     failed = true;
   }
@@ -43,8 +44,9 @@ async function Directory({ searchParams }: Pick<PageProps<"/">, "searchParams">)
 
       <div className="flex items-center justify-between gap-3 pt-4 text-sm font-medium text-muted" aria-live="polite">
         <p>
-          {failed ? "" : `${total.toLocaleString("en")} ${total === 1 ? "result" : "results"}`}
-          {!failed && pages > 1 ? ` · page ${Math.min(page, pages)} of ${pages.toLocaleString("en")}` : ""}
+          {failed || !counted ? "" : `${total.toLocaleString("en")} ${total === 1 ? "result" : "results"}`}
+          {!failed && counted && pages > 1 ? ` · page ${Math.min(page, pages)} of ${pages.toLocaleString("en")}` : ""}
+          {!failed && !counted ? `Page ${page}` : ""}
         </p>
         {hasFilters && (
           <Link href="/" className="font-semibold text-accent hover:underline">
