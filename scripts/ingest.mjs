@@ -393,7 +393,8 @@ async function buildEntry(c, existing) {
     last_updated: repo.pushed_at,
     license: repo.license?.spdx_id && repo.license.spdx_id !== "NOASSERTION" ? repo.license.spdx_id : null,
     topics,
-    readme: readme.slice(0, README_KEEP_GITHUB) || null,
+    // toWellFormed: cutting in the middle of an emoji would leave half a character the database rejects.
+    readme: readme.slice(0, README_KEEP_GITHUB).toWellFormed() || null,
     default_branch: repo.default_branch,
     install_command: extractInstallCommand(readme, { type, fullName: repo.full_name, ev: c.ev }) ?? c.installHint ?? null,
     ...categorize({ name: repo.name, description: repo.description, topics, readme, type }),
