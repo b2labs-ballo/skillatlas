@@ -7,7 +7,8 @@ import { Avatar, EntryCard, TypeBadge } from "@/components/EntryCard";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { Readme } from "@/components/Readme";
 import { fullLabel, label } from "@/lib/categories";
-import { type Entry, getEntry, getReadme, getRelated } from "@/lib/db";
+import { DownloadLink } from "@/components/DownloadLink";
+import { type Entry, getEntry, getEntryDownloads, getReadme, getRelated } from "@/lib/db";
 import { formatDate, formatStars } from "@/lib/format";
 
 export async function generateMetadata({ params }: PageProps<"/e/[slug]">): Promise<Metadata> {
@@ -113,6 +114,7 @@ async function EntryDetail({ params }: Pick<PageProps<"/e/[slug]">, "params">) {
   const entry = await getEntry((await params).slug);
   if (!entry) notFound();
   const updated = formatDate(entry.last_updated);
+  const viaUs = entry.github_url ? await getEntryDownloads(entry.slug) : 0;
   const isGpt = entry.type === "gpt";
   const sourceName = SOURCE_NAME[entry.source ?? ""];
   const original = !entry.github_url && sourceName ? entry.source_url : null; // non-GitHub entries link to their own page
@@ -156,6 +158,7 @@ async function EntryDetail({ params }: Pick<PageProps<"/e/[slug]">, "params">) {
           {entry.github_url && <Fact name="GitHub stars">★ {formatStars(entry.stars)}</Fact>}
           {entry.type === "model" && <Fact name="Likes">♥ {formatStars(entry.stars)}</Fact>}
           {entry.downloads ? <Fact name={entry.github_url ? "Monthly installs" : "Downloads"}>{formatStars(entry.downloads)}</Fact> : null}
+          {viaUs > 0 && <Fact name="Downloads here">{formatStars(viaUs)}</Fact>}
           {updated && <Fact name="Last updated">{updated}</Fact>}
           {!isGpt && <Fact name="License">{entry.license ?? "Not stated"}</Fact>}
           <Fact name="Made by">{entry.author}</Fact>
@@ -169,10 +172,10 @@ async function EntryDetail({ params }: Pick<PageProps<"/e/[slug]">, "params">) {
             </a>
           )}
           {entry.github_url && (
-            <a href={`${entry.github_url}/archive/HEAD.zip`} rel="noopener noreferrer nofollow" className={secondary} title="Downloads the latest version as a ZIP file, straight from the creator's GitHub repository">
+            <DownloadLink slug={entry.slug} href={`${entry.github_url}/archive/HEAD.zip`} className={secondary} title="Downloads the latest version as a ZIP file, straight from the creator's GitHub repository">
               <Icon d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" />
               Download ZIP
-            </a>
+            </DownloadLink>
           )}
           {original && (
             <a href={original} {...external} className={`${button} btn-primary`}>

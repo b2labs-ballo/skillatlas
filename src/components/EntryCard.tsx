@@ -1,9 +1,24 @@
 import Link from "next/link";
 import { label } from "@/lib/categories";
-import { formatStars } from "@/lib/format";
+import { formatStars, shortDescription } from "@/lib/format";
 import type { EntryCardData } from "@/lib/public-db";
 import { typeStyle } from "@/lib/typeStyle";
 import { FavoriteButton } from "./FavoriteButton";
+
+/** Used on a tile when the creator wrote no description. */
+const KIND: Record<string, string> = {
+  skill: "A skill",
+  plugin: "A plugin",
+  collection: "A collection of skills and plugins",
+  mcp: "An MCP server",
+  gpt: "A custom GPT",
+  subagent: "A Claude Code add-on",
+  prompt: "A set of prompts or rules",
+  agent: "A coding agent",
+  "local-app": "A local AI app",
+  extension: "An editor extension",
+  model: "A local AI model",
+};
 
 export function Avatar({ entry, size }: { entry: Pick<EntryCardData, "author_avatar" | "name" | "type">; size: number }) {
   const style = { width: size, height: size };
@@ -44,7 +59,7 @@ export function EntryCard({ entry }: { entry: EntryCardData }) {
       </div>
 
       <p className="line-clamp-2 text-[15px] leading-relaxed text-muted">
-        {entry.description || "No description provided by the author."}
+        {shortDescription(entry.description) ?? `${KIND[entry.type] ?? "An AI tool"} by ${entry.author}.`}
       </p>
 
       <div className="mt-auto flex items-center justify-between gap-3">

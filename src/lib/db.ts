@@ -84,6 +84,36 @@ export async function listEntries(p: ListParams) {
   }
 }
 
+/** Total visits and download clicks. Null until the counters exist in the database. */
+export async function getSiteTotals(): Promise<{ visits: number; downloads: number } | null> {
+  "use cache";
+  cacheLife("minutes");
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/site_totals`, {
+      method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+      body: "{}",
+    });
+    if (!res.ok) return null;
+    const t = (await res.json()) as { visits?: number; downloads?: number };
+    return { visits: Number(t.visits) || 0, downloads: Number(t.downloads) || 0 };
+  } catch {
+    return null;
+  }
+}
+
+/** How many times this entry's download button was clicked on SkillAtlas. */
+export async function getEntryDownloads(slug: string): Promise<number> {
+  "use cache";
+  cacheLife("minutes");
+  try {
+    const { rows } = await query<{ downloads: number }>(`entry_downloads?select=downloads&slug=eq.${encodeURIComponent(slug)}&limit=1`);
+    return rows[0]?.downloads ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 export async function getEntry(slug: string): Promise<Entry | null> {
   "use cache";
   cacheLife("minutes");

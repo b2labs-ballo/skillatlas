@@ -1,8 +1,27 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist_Mono, Inter } from "next/font/google";
 import Link from "next/link";
+import { Suspense } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { VisitTracker } from "@/components/VisitTracker";
+import { getSiteTotals } from "@/lib/db";
 import "./globals.css";
+
+/** Small public counters in the footer. Shows nothing until the counters exist. */
+async function SiteTotals() {
+  const totals = await getSiteTotals();
+  if (!totals) return null;
+  return (
+    <>
+      <span>
+        <strong className="font-semibold text-ink">{totals.visits.toLocaleString("en")}</strong> visits
+      </span>
+      <span>
+        <strong className="font-semibold text-ink">{totals.downloads.toLocaleString("en")}</strong> downloads via SkillAtlas
+      </span>
+    </>
+  );
+}
 
 const body = Inter({ variable: "--font-body", subsets: ["latin"] });
 const heading = Bricolage_Grotesque({ variable: "--font-heading", subsets: ["latin"] });
@@ -43,6 +62,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               SkillAtlas
             </Link>
             <nav className="flex items-center gap-1 text-sm">
+              <Link href="/feedback" className="hidden rounded-full px-4 py-2 font-medium text-ink hover:bg-chip sm:block">
+                Feedback
+              </Link>
               <Link href="/favorites" className="rounded-full px-4 py-2 font-medium text-ink hover:bg-chip">
                 Favourites
               </Link>
@@ -53,10 +75,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-8 sm:py-12">{children}</main>
         <footer className="mt-8 border-t border-line">
           <div className="mx-auto w-full max-w-7xl px-5 py-8 text-center text-sm leading-relaxed text-muted">
-            SkillAtlas is a directory. Every entry belongs to its creator — we link to and credit the original source and
-            never copy or host anyone&apos;s code.
+            <p>
+              SkillAtlas is a directory. Every entry belongs to its creator — we link to and credit the original source and
+              never copy or host anyone&apos;s code.
+            </p>
+            <p className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
+              <Suspense fallback={null}>
+                <SiteTotals />
+              </Suspense>
+              <Link href="/feedback" className="font-semibold text-accent hover:underline">
+                Send feedback
+              </Link>
+            </p>
           </div>
         </footer>
+        <VisitTracker />
       </body>
     </html>
   );
