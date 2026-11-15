@@ -15,7 +15,10 @@ export function VisitTracker() {
     } catch {
       return; // storage blocked: don't count, otherwise every page would count as a visit
     }
-    void callFunction("track_visit");
+    // If the count did not get through, forget the mark so the next page tries again.
+    void callFunction("track_visit").then((ok) => {
+      if (!ok) sessionStorage.removeItem(KEY);
+    });
   }, []);
   return null;
 }
