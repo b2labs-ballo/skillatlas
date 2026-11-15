@@ -7,6 +7,8 @@
 //   node scripts/ingest.mjs --dry      saves to data/dry-run.json instead of the database
 //   node scripts/ingest.mjs --quick    small sample (used automatically without a token)
 //   node scripts/ingest.mjs --limit 50 process at most 50 repositories
+//   node scripts/ingest.mjs --full     re-check every listed repository (the normal run
+//                                      re-checks a seventh of them each day)
 //   node scripts/ingest.mjs --sources extra,registry,npm,openvsx,hf   only some source groups
 //     groups: core (skills, plugins, MCP, GPT lists/topics/code search), extra (local apps,
 //     coding agents, prompts, Claude Code add-ons), registry, npm, openvsx, hf
@@ -27,6 +29,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABAS
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const DRY = flag("dry") || !SUPABASE_URL || !SUPABASE_KEY;
 const QUICK = flag("quick") || !TOKEN;
+const FULL = flag("full"); // re-check every listed repository, not just today's seventh
 const LIMIT = Number(option("limit") || (QUICK ? 25 : 0));
 const README_MAX = Number(process.env.README_MAX_CHARS || 20000);
 // GitHub entries keep only the opening of the README (enough for search and as
@@ -353,7 +356,22 @@ const skip = (reason) => {
   return null;
 };
 
+/**
+ * Repositories we already list and that need a GitHub request to re-check
+ * (found through lists, the MCP Registry, npm or code search) are refreshed
+ * once a week, a seventh of them each day, so the daily run stays short.
+ */
+function dueToday(sourceKey) {
+  let h = 0;
+  for (let i = 0; i < sourceKey.length; i++) h = (h * 31 + sourceKey.charCodeAt(i)) >>> 0;
+  return h % 7 === Math.floor(Date.now() / 86_400_000) % 7;
+}
+
 async function buildEntry(c, existing) {
+  if (!c.repo && !FULL) {
+    const key = `gh:${c.fullName.toLowerCase()}`;
+    if (existing.has(key) && !dueToday(key)) return skip("already listed, re-checked on another day");
+  }
   const repo = c.repo || (await gh.get(`/repos/${c.fullName}`));
   if (!repo || !repo.full_name) return skip("not found");
   if (repo.private) return skip("private");
@@ -379,6 +397,8 @@ async function buildEntry(c, existing) {
   if (!unchanged && readme === null) readme = await gh.get(`/repos/${repo.full_name}/readme`, { raw: true });
   if (unchanged) {
     stats.unchanged++;
+    // Nothing changed at all (found by search, same stars): no need to write to the database.
+    if (c.repo && prev.stars === repo.stargazers_count) return null;
     return { partial: true, source_key: sourceKey, stars: repo.stargazers_count, topics, description: repo.description?.slice(0, 500) ?? null };
   }
 
@@ -446,7 +466,7 @@ async function loadExisting() {
   const map = new Map();
   if (DRY) return map;
   for (let from = 0; ; from += 1000) {
-    const rows = await db(`entries?select=source_key,last_updated&order=id`, { headers: { Range: `${from}-${from + 999}` } });
+    const rows = await db(`entries?select=source_key,last_updated,stars&order=id`, { headers: { Range: `${from}-${from + 999}` } });
     for (const r of rows || []) map.set(r.source_key, r);
     if (!rows || rows.length < 1000) break;
   }
