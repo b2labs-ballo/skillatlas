@@ -27,5 +27,6 @@ jobs:
         run: node scripts/ingest.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GH_INGEST_TOKEN }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          # The database address is public (the website uses it too), so it is not a secret.
+          SUPABASE_URL: https://wdtpgyqhjgvykvzsquco.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
